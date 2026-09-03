@@ -1,42 +1,42 @@
-# vue3-app
+# 音阶阶
 
-This template should help get you started developing with Vue 3 in Vite.
+面向中文简谱初学者的音高与乐理训练 Web 应用，通过简谱、首调唱名、音名、钢琴键位和声音之间的渐进练习，建立相对音高认知。
 
-## Recommended IDE Setup
+当前仓库处于 MVP 原型阶段，已实现首页/学习路径界面；完整产品范围见 [PRD](docs/music-theory-ear-training-prd-v1.md)。
 
-[VS Code](https://code.visualstudio.com/) + [Vue (Official)](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+## Tech Stack
 
-## Recommended Browser Setup
+- Vue 3 + TypeScript
+- Vite
+- Tailwind CSS 4
+- npm
 
-- Chromium-based browsers (Chrome, Edge, Brave, etc.):
-  - [Vue.js devtools](https://chromewebstore.google.com/detail/vuejs-devtools/nhdogjmejiglipccpnnnanhbledajbpd)
-  - [Turn on Custom Object Formatter in Chrome DevTools](http://bit.ly/object-formatters)
-- Firefox:
-  - [Vue.js devtools](https://addons.mozilla.org/en-US/firefox/addon/vue-js-devtools/)
-  - [Turn on Custom Object Formatter in Firefox DevTools](https://fxdx.dev/firefox-devtools-custom-object-formatters/)
-
-## Type Support for `.vue` Imports in TS
-
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
-
-## Customize configuration
-
-See [Vite Configuration Reference](https://vite.dev/config/).
-
-## Project Setup
+## Local Development
 
 ```sh
 npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
 npm run dev
 ```
 
-### Type-Check, Compile and Minify for Production
+## Build
 
 ```sh
 npm run build
+npm run preview
 ```
+
+`npm run build` 会执行 Vue/TypeScript 类型检查并生成生产资源。当前仓库尚未配置 lint、单元测试或 E2E 测试。
+
+## Project Knowledge
+
+- Agent 工作入口：[AGENTS.md](AGENTS.md)
+- 架构总览：[ARCHITECTURE.md](ARCHITECTURE.md)
+- 项目知识索引：[docs/index.md](docs/index.md)
+- 产品需求：[docs/music-theory-ear-training-prd-v1.md](docs/music-theory-ear-training-prd-v1.md)
+- AI 项目初始化 Skill：[.github/skills/ai-project-init/SKILL.md](.github/skills/ai-project-init/SKILL.md)
+
+项目知识按需加载：instructions、长期知识、工作流程、执行计划和代码事实分别维护，避免依赖单一 memory 文件。
+
+## Deployment
+
+`main` 分支更新、release 发布或手动触发 workflow 时，GitHub Actions 会构建并部署 `dist/` 到 GitHub Pages。Vite 的站点 base path 为 `/music-game/`。

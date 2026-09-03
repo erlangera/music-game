@@ -1,0 +1,73 @@
+# Music Game Repository Guide
+
+本文件是 Agent 的项目入口和知识地图，不是完整知识库。先按任务读取相关文档，再检查源码和当前 diff；当文档与代码冲突时，以代码、配置和可执行验证结果为准，并修正文档。
+
+## Project Snapshot
+
+- 产品：面向中文简谱初学者的音高与乐理训练 Web 应用，工作名“音阶阶”。
+- 当前阶段：首页/学习路径原型和模块一 S1/S2 双向文字练习；完整 MVP 仍以 PRD 为规划目标。
+- 技术栈：Vue 3、TypeScript、Vite、Tailwind CSS 4。
+- 包管理：npm，锁文件为 `package-lock.json`。
+- 部署：GitHub Actions 构建并发布到 GitHub Pages，站点 base path 为 `/music-game/`。
+
+## Commands
+
+```bash
+npm install
+npm run dev
+npm run build
+npm run preview
+```
+
+`npm run build` 会并行执行 `vue-tsc --build` 和 Vite 生产构建，是当前最低验证门槛。仓库目前没有 lint、单元测试或 E2E 脚本；不要声称这些检查已经运行。
+
+## Repository Map
+
+- `src/main.ts`：浏览器入口，加载全局样式并挂载 Vue 应用。
+- `src/App.vue`：首页原型及首页/训练页的本地视图切换。
+- `src/components/SolfegeMemoryPractice.vue`：模块一双向唱名记忆练习、即时反馈和本轮报告。
+- `src/assets/main.css`：Tailwind 入口、设计 token 和全局基础样式。
+- `public/`：不经打包处理的静态资源。
+- `docs/`：项目长期知识；入口见 `docs/index.md`。
+- `.github/skills/`：随仓库版本控制的可复用 Agent 工作流，不存放项目事实。
+- `.github/workflows/deploy-pages.yml`：GitHub Pages 构建与发布流程。
+
+## Knowledge Routing
+
+- 架构总览：`ARCHITECTURE.md`
+- 详细架构与前端约定：`docs/architecture/`
+- 产品范围和实现状态：`docs/product/index.md`
+- 乐理术语与领域不变量：`docs/domain/music-theory.md`
+- 完整 MVP 需求：`docs/music-theory-ear-training-prd-v1.md`
+- 架构决策记录：`docs/decisions/`
+- 长任务计划与进度：`docs/exec-plans/`
+- 当前质量门槛：`docs/quality/index.md`
+- 可再生成的仓库索引：`docs/generated/`
+
+## Working Rules
+
+1. 开始前查看 `git status --short`，保留用户已有和未提交的改动。
+2. 修改模块前先读本文件、相关知识文档、源码入口和附近实现。
+3. 区分事实与计划：已实现行为从代码和配置确认；未来功能从 PRD 读取并明确标注“规划中”。
+4. 优先复用已有 Vue、TypeScript 和 Tailwind 模式；新增依赖必须有明确收益。
+5. 不把聊天记录、临时记忆或生成文档当作唯一事实来源。
+6. 复杂、跨模块或需要跨会话的任务，在 `docs/exec-plans/active/` 保存执行计划；完成后移到 `completed/`。
+7. 改动架构、领域规则、产品边界或验证方式时，同步更新对应文档；只影响实现细节时不做无意义的文档 churn。
+
+## Frontend Conventions
+
+- 使用 Vue Composition API 和 `<script setup lang="ts">`。
+- 保持 TypeScript 严格性，不用 `any` 绕过可建模的类型问题。
+- 使用 `@/` 引用 `src/` 下模块。
+- 视觉 token 优先定义在 `src/assets/main.css` 的 `@theme` 中，避免在多处复制语义颜色。
+- 交互控件必须有可访问名称，并保持键盘焦点可见。
+- 页面至少考虑 320px 宽度和桌面布局；不要只验证单一视口。
+
+## Definition of Done
+
+- 实现与用户请求、PRD 的当前范围一致，没有把后续规划顺手扩入。
+- `npm run build` 通过。
+- 受影响的关键交互在浏览器中完成针对性验证；若无法验证，明确说明。
+- 没有覆盖无关的未提交改动。
+- 新增事实能从代码、配置、测试或明确的产品文档追溯。
+- 架构、产品边界、领域不变量或工作流发生变化时，相关知识文档已同步。

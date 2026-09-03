@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI 项目初始化"
+  short_description: "为代码仓库建立可维护的 AI 项目知识与工作流架构"
+  default_prompt: "使用 $ai-project-init 检查当前仓库并初始化可维护的 AI 项目知识架构。"
