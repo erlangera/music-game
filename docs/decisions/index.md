@@ -12,5 +12,6 @@
 ## Records
 
 - [`0001-repository-native-ai-knowledge.md`](0001-repository-native-ai-knowledge.md) — 使用 repository-native 的 AI 项目知识架构（accepted）。
+- [`0002-hash-routing-for-static-hosting.md`](0002-hash-routing-for-static-hosting.md) — 使用 hash history 支持 GitHub Pages 上的页面直达（accepted）。
 
 新增记录使用四位递增编号，并至少写明状态、背景、决定、影响和验证方式。

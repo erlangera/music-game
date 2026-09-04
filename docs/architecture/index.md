@@ -8,20 +8,26 @@
 index.html
   -> /src/main.ts
        -> /src/assets/main.css
+       -> /src/router/index.ts
        -> createApp(App)
-            -> /src/App.vue
-                 -> local refs and static stage data
-                 -> rendered learning-path prototype
-                 -> /src/components/SolfegeMemoryPractice.vue
-                      -> question queue, shuffled options and scoring state
+            -> /src/App.vue (RouterView)
+                 -> /src/views/HomeView.vue
+                      -> local refs and static stage data
+                      -> rendered learning-path prototype
+                 -> /src/views/SolfegePracticeView.vue
+                      -> /src/components/SolfegeMemoryPractice.vue
+                           -> question queue, shuffled options and scoring state
 ```
 
 ## Source Responsibilities
 
 | 路径 | 当前职责 | 备注 |
 | --- | --- | --- |
-| `src/main.ts` | 应用启动和全局样式导入 | 保持轻量，不承载业务逻辑 |
-| `src/App.vue` | 首页布局、阶段展示和临时交互 | 当前为原型级单组件实现 |
+| `src/main.ts` | 应用启动、路由注册和全局样式导入 | 保持轻量，不承载业务逻辑 |
+| `src/router/index.ts` | 路由表、hash history、滚动和页面标题 | hash 模式用于兼容 GitHub Pages 直接访问 |
+| `src/App.vue` | 根路由出口 | 不承载页面业务逻辑 |
+| `src/views/HomeView.vue` | 首页布局、阶段展示和临时交互 | 首页路由 `/` |
+| `src/views/SolfegePracticeView.vue` | 唱名训练页编排和返回首页导航 | 训练路由 `/solfege` |
 | `src/components/SolfegeMemoryPractice.vue` | 唱名 S1/S2 双向文字练习、即时判分和本轮报告 | 状态仅在组件内存中，退出或刷新后不保留 |
 | `src/assets/main.css` | Tailwind 入口、设计 token、全局基线 | 当前实际被 `main.ts` 导入 |
 | `src/assets/base.css` | Vue starter 遗留样式 | 当前未被入口导入 |
@@ -40,7 +46,7 @@ index.html
 
 以下是边界建议，不代表已经实现：
 
-- 当训练页需要直接 URL、浏览器前进后退或出现更多独立页面时，引入路由并把首页移出 `App.vue`。
+- 新增真实页面时在路由表中声明并放入 `src/views/`；不要为尚未实现的导航项建立空页面。
 - 当学习进度需要跨页面共享时，再建立明确的状态与持久化边界。
 - 把乐理规则、题目生成与评分建模为不依赖 Vue 的领域模块，方便确定性测试。
 - 把 Web Audio、MIDI 和浏览器存储封装为适配器，不让平台 API 渗入领域规则。
