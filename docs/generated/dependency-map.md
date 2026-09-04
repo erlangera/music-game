@@ -1,6 +1,6 @@
 # Dependency Map
 
-- Generated: 2026-09-04
+- Generated: 2026-09-05
 - Inputs: `package.json`, `vite.config.ts`, `src/main.ts`, `.github/workflows/deploy-pages.yml`
 - Refresh when: 依赖、构建入口、Vite 插件或部署 workflow 变化
 - Method: 可人工刷新
@@ -16,7 +16,8 @@ Vue application
   └── Tailwind CSS 4
 
 Build
-  └── npm-run-all2 -> type-check + vite build
+  ├── npm-run-all2 -> lint + type-check + vite build
+  └── ESLint -> Antfu config + better-tailwindcss
 
 Delivery
   └── GitHub Actions -> GitHub Pages

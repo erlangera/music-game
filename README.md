@@ -9,6 +9,7 @@
 - Vue 3 + TypeScript
 - Vite
 - Tailwind CSS 4
+- ESLint + Antfu config
 - npm
 
 ## Local Development
@@ -18,14 +19,16 @@ npm install
 npm run dev
 ```
 
-## Build
+## Verification and Build
 
 ```sh
+npm run lint
 npm run build
+npm run check
 npm run preview
 ```
 
-`npm run build` 会执行 Vue/TypeScript 类型检查并生成生产资源。当前仓库尚未配置 lint、单元测试或 E2E 测试。
+`npm run lint` 检查 Vue、TypeScript、Tailwind class 和仓库配置；`npm run build` 执行 Vue/TypeScript 类型检查并生成生产资源；`npm run check` 并行执行两者。当前仓库尚未配置单元测试或 E2E 测试。
 
 ## Project Knowledge
 

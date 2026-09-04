@@ -23,6 +23,7 @@ Browser
 - 路由：Vue Router，使用 hash history 兼容 GitHub Pages 静态托管。
 - 类型检查：TypeScript + `vue-tsc`。
 - 样式：Tailwind CSS 4，经 Vite 插件处理。
+- 静态检查：ESLint + Antfu config，并校验 Vue 模板中的 Tailwind class。
 - 构建：Vite，生产资源输出到 `dist/`。
 - 发布：GitHub Actions -> GitHub Pages，公共路径为 `/music-game/`。
 - 数据：当前仅为组件内静态数据；PRD 中的学习记录、本地存储、音频和 MIDI 均尚未实现。
@@ -32,7 +33,7 @@ Browser
 - 当前只有首页 `/` 和唱名训练 `/solfege` 两个真实路由；其他导航入口仍是规划占位。
 - 唱名 S1/S2 已拆为独立组件，但还没有共享训练引擎。
 - 仓库中保留 Vue starter components，但当前入口没有引用它们。
-- 尚未建立自动化测试和 lint；现阶段 `npm run build` 是唯一仓库级质量门槛。
+- 尚未建立自动化测试；`npm run check` 是当前仓库级质量门槛，覆盖 lint、类型检查和生产构建。
 - 产品需求覆盖多个训练模块，但当前实现只代表首页原型，不能据此推断训练引擎已存在。
 
 ## Detailed Knowledge

@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 
-type Stage = {
+interface Stage {
   step: string
   title: string
   description: string
@@ -141,9 +141,11 @@ function handleStageAction(stage: Stage) {
           <span class="text-xs font-bold text-brand">3 / 5 天</span>
         </div>
         <div class="h-2 overflow-hidden rounded-full bg-white">
-          <div class="h-full w-3/5 rounded-full bg-lime"></div>
+          <div class="h-full w-3/5 rounded-full bg-lime" />
         </div>
-        <p class="mt-3 text-xs leading-5 text-muted">再练习 2 天，保持你的学习节奏</p>
+        <p class="mt-3 text-xs/5 text-muted">
+          再练习 2 天，保持你的学习节奏
+        </p>
       </div>
     </aside>
 
@@ -157,7 +159,9 @@ function handleStageAction(stage: Stage) {
             <strong class="text-[18px] font-extrabold tracking-tight">音阶阶</strong>
           </RouterLink>
           <div class="hidden lg:block">
-            <p class="text-xs font-bold text-muted">2026 年 9 月 3 日 · 星期四</p>
+            <p class="text-xs font-bold text-muted">
+              2026 年 9 月 3 日 · 星期四
+            </p>
           </div>
           <div class="flex items-center gap-2 sm:gap-3">
             <button type="button" class="grid size-10 place-items-center rounded-full text-muted transition-colors hover:bg-white hover:text-ink" aria-label="通知" @click="showNotice('今天没有新的通知')">
@@ -172,12 +176,18 @@ function handleStageAction(stage: Stage) {
         </div>
       </header>
 
-      <main id="main-content" class="mx-auto max-w-[1240px] px-4 pb-28 pt-7 sm:px-6 sm:pt-9 lg:px-10 lg:pb-12 lg:pt-10 xl:px-12">
+      <main id="main-content" class="mx-auto max-w-[1240px] px-4 pt-7 pb-28 sm:px-6 sm:pt-9 lg:px-10 lg:pt-10 lg:pb-12 xl:px-12">
         <section class="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p class="mb-2 text-sm font-extrabold text-brand">早上好，继续前进吧</p>
-            <h1 class="text-[28px] font-extrabold leading-tight tracking-[-0.035em] sm:text-4xl">今天想练点什么？</h1>
-            <p class="mt-2 max-w-xl text-sm leading-6 text-muted sm:text-[15px]">每天 5 分钟，让唱名、键位和声音慢慢连成一张地图。</p>
+            <p class="mb-2 text-sm font-extrabold text-brand">
+              早上好，继续前进吧
+            </p>
+            <h1 class="text-[28px] leading-tight font-extrabold tracking-[-0.035em] sm:text-4xl">
+              今天想练点什么？
+            </h1>
+            <p class="mt-2 max-w-xl text-sm/6 text-muted sm:text-[15px]">
+              每天 5 分钟，让唱名、键位和声音慢慢连成一张地图。
+            </p>
           </div>
           <div class="flex items-center gap-2 text-sm font-bold text-muted">
             <span class="grid size-8 place-items-center rounded-full bg-[#fff4d2] text-[#b87900]">🔥</span>
@@ -188,17 +198,23 @@ function handleStageAction(stage: Stage) {
         <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
           <div class="min-w-0 space-y-7">
             <section class="relative isolate overflow-hidden rounded-[28px] bg-brand p-5 text-white shadow-card sm:p-7 md:p-8" aria-labelledby="recommended-title">
-              <div class="pointer-events-none absolute -right-12 -top-20 -z-10 size-64 rounded-full border-[42px] border-white/[0.06]"></div>
-              <div class="pointer-events-none absolute -bottom-24 right-24 -z-10 size-48 rounded-full bg-[#3e916f]/50 blur-2xl"></div>
+              <div class="pointer-events-none absolute -top-20 -right-12 -z-10 size-64 rounded-full border-42 border-white/6" />
+              <div class="pointer-events-none absolute right-24 -bottom-24 -z-10 size-48 rounded-full bg-[#3e916f]/50 blur-2xl" />
               <div class="flex flex-col gap-7 md:flex-row md:items-center md:justify-between">
                 <div class="max-w-lg">
                   <div class="mb-5 flex items-center gap-2">
                     <span class="rounded-full bg-white/15 px-3 py-1.5 text-[11px] font-extrabold tracking-wide">今日推荐 · 约 5 分钟</span>
                   </div>
-                  <p class="mb-2 text-sm font-bold text-white/70">阶段 1 · 第 5 课</p>
-                  <h2 id="recommended-title" class="text-2xl font-extrabold tracking-tight sm:text-[30px]">唱名记忆训练</h2>
-                  <p class="mt-3 text-sm leading-6 text-white/75">看到一个唱名，从随机排列的数字中选出对应简谱。完成本课即可开启阶段检测。</p>
-                  <button type="button" class="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-lime px-6 text-sm font-extrabold text-[#24310d] shadow-[0_6px_18px_rgb(15_42_28_/_0.18)] transition hover:-translate-y-0.5 hover:bg-[#e1f176] sm:w-auto" @click="startSolfegePractice">
+                  <p class="mb-2 text-sm font-bold text-white/70">
+                    阶段 1 · 第 5 课
+                  </p>
+                  <h2 id="recommended-title" class="text-2xl font-extrabold tracking-tight sm:text-[30px]">
+                    唱名记忆训练
+                  </h2>
+                  <p class="mt-3 text-sm/6 text-white/75">
+                    看到一个唱名，从随机排列的数字中选出对应简谱。完成本课即可开启阶段检测。
+                  </p>
+                  <button type="button" class="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-lime px-6 text-sm font-extrabold text-[#24310d] shadow-[0_6px_18px_rgb(15_42_28/0.18)] transition hover:-translate-y-0.5 hover:bg-[#e1f176] sm:w-auto" @click="startSolfegePractice">
                     开始训练
                     <svg viewBox="0 0 20 20" class="size-4" aria-hidden="true"><path d="m7 4 6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
                   </button>
@@ -208,7 +224,7 @@ function handleStageAction(stage: Stage) {
                   <div class="relative aspect-[1.45] rounded-2xl bg-white/10 p-3 backdrop-blur-sm">
                     <div class="flex h-full gap-1.5 rounded-xl bg-[#f7f8f4] p-2 pb-3">
                       <div v-for="key in 7" :key="key" class="relative flex-1 rounded-b-md bg-white shadow-[0_3px_0_#d6ddd8]">
-                        <span v-if="[1, 2, 4, 5, 6].includes(key)" class="absolute -right-[36%] top-0 z-10 h-[58%] w-[62%] rounded-b-md bg-[#203128] shadow-sm"></span>
+                        <span v-if="[1, 2, 4, 5, 6].includes(key)" class="absolute top-0 right-[-36%] z-10 h-[58%] w-[62%] rounded-b-md bg-[#203128] shadow-sm" />
                         <span v-if="key === 1" class="absolute inset-x-0 bottom-1 text-center text-[10px] font-extrabold text-brand">do</span>
                         <span v-if="key === 3" class="absolute inset-x-0 bottom-1 text-center text-[10px] font-extrabold text-brand">mi</span>
                         <span v-if="key === 5" class="absolute inset-x-0 bottom-1 text-center text-[10px] font-extrabold text-brand">sol</span>
@@ -222,8 +238,12 @@ function handleStageAction(stage: Stage) {
             <section aria-labelledby="path-title">
               <div class="mb-4 flex items-center justify-between">
                 <div>
-                  <h2 id="path-title" class="text-xl font-extrabold tracking-tight sm:text-2xl">你的学习路径</h2>
-                  <p class="mt-1 text-sm text-muted">按顺序建立稳固的音高认知</p>
+                  <h2 id="path-title" class="text-xl font-extrabold tracking-tight sm:text-2xl">
+                    你的学习路径
+                  </h2>
+                  <p class="mt-1 text-sm text-muted">
+                    按顺序建立稳固的音高认知
+                  </p>
                 </div>
                 <button type="button" class="hidden min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-extrabold text-brand hover:bg-brand-soft sm:flex" @click="showNotice('共 9 个学习阶段')">
                   查看全部
@@ -232,7 +252,7 @@ function handleStageAction(stage: Stage) {
               </div>
 
               <div class="grid gap-3 md:grid-cols-2">
-                <article v-for="stage in stages" :key="stage.step" class="group rounded-[22px] border border-line bg-white p-4 shadow-[0_1px_2px_rgb(23_34_29_/_0.03)] transition sm:p-5" :class="stage.status === 'locked' ? 'opacity-70' : 'hover:-translate-y-0.5 hover:shadow-card'">
+                <article v-for="stage in stages" :key="stage.step" class="group rounded-[22px] border border-line bg-white p-4 shadow-[0_1px_2px_rgb(23_34_29/0.03)] transition sm:p-5" :class="stage.status === 'locked' ? 'opacity-70' : 'hover:-translate-y-0.5 hover:shadow-card'">
                   <div class="flex items-start gap-3.5">
                     <div class="grid size-12 shrink-0 place-items-center rounded-2xl font-extrabold" :class="toneClasses[stage.tone].icon">
                       <svg v-if="stage.step === '01'" viewBox="0 0 24 24" class="size-6" aria-hidden="true"><path d="M8 17V6l9-2v11" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" /><circle cx="6" cy="17" r="2.3" fill="currentColor" /><circle cx="15" cy="15" r="2.3" fill="currentColor" /></svg>
@@ -247,12 +267,16 @@ function handleStageAction(stage: Stage) {
                         <span v-if="stage.status === 'ready'" class="rounded-full px-2.5 py-1 text-[10px] font-extrabold" :class="toneClasses[stage.tone].bubble">待开始</span>
                         <svg v-if="stage.status === 'locked'" viewBox="0 0 20 20" class="size-4 text-muted" aria-label="未解锁"><rect x="5" y="9" width="10" height="8" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" /><path d="M7.5 9V7a2.5 2.5 0 0 1 5 0v2" fill="none" stroke="currentColor" stroke-width="1.6" /></svg>
                       </div>
-                      <h3 class="mt-1 text-[16px] font-extrabold">{{ stage.title }}</h3>
-                      <p class="mt-1 text-xs leading-5 text-muted">{{ stage.description }}</p>
+                      <h3 class="mt-1 text-[16px] font-extrabold">
+                        {{ stage.title }}
+                      </h3>
+                      <p class="mt-1 text-xs/5 text-muted">
+                        {{ stage.description }}
+                      </p>
 
                       <div class="mt-4 flex items-center gap-3">
                         <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-[#eef0ed]">
-                          <div class="h-full rounded-full" :class="toneClasses[stage.tone].bar" :style="{ width: `${stage.progress}%` }"></div>
+                          <div class="h-full rounded-full" :class="toneClasses[stage.tone].bar" :style="{ width: `${stage.progress}%` }" />
                         </div>
                         <span class="shrink-0 text-[11px] font-bold text-muted">{{ stage.lessons }}</span>
                       </div>
@@ -268,15 +292,17 @@ function handleStageAction(stage: Stage) {
           </div>
 
           <aside class="space-y-5" aria-label="学习概览">
-            <section class="rounded-[24px] border border-line bg-white p-5 shadow-[0_1px_2px_rgb(23_34_29_/_0.03)]">
+            <section class="rounded-[24px] border border-line bg-white p-5 shadow-[0_1px_2px_rgb(23_34_29/0.03)]">
               <div class="flex items-center justify-between">
-                <h2 class="text-base font-extrabold">本周学习</h2>
+                <h2 class="text-base font-extrabold">
+                  本周学习
+                </h2>
                 <span class="text-xs font-bold text-muted">9月 1–7日</span>
               </div>
               <div class="mt-5 flex items-end justify-between gap-2" aria-label="本周学习天数图表">
                 <div v-for="(day, index) in ['一', '二', '三', '四', '五', '六', '日']" :key="day" class="flex flex-1 flex-col items-center gap-2">
                   <div class="flex h-20 w-full max-w-6 items-end rounded-full bg-[#eff1ee] p-[3px]">
-                    <div class="w-full rounded-full" :class="index < 3 ? 'bg-brand' : index === 3 ? 'bg-lime' : 'bg-transparent'" :style="{ height: index < 3 ? `${[45, 72, 55][index]}%` : index === 3 ? '32%' : '0%' }"></div>
+                    <div class="w-full rounded-full" :class="index < 3 ? 'bg-brand' : index === 3 ? 'bg-lime' : 'bg-transparent'" :style="{ height: index < 3 ? `${[45, 72, 55][index]}%` : index === 3 ? '32%' : '0%' }" />
                   </div>
                   <span class="text-[10px] font-bold" :class="index === 3 ? 'text-ink' : 'text-muted'">{{ day }}</span>
                 </div>
@@ -297,8 +323,12 @@ function handleStageAction(stage: Stage) {
               <div class="flex gap-3.5">
                 <span class="grid size-10 shrink-0 place-items-center rounded-2xl bg-white/80 text-lg">💡</span>
                 <div>
-                  <h2 class="text-sm font-extrabold">今日小贴士</h2>
-                  <p class="mt-1.5 text-xs leading-5 text-[#756b50]">练习时先唱出答案再点击，能帮助耳朵更快记住音级关系。</p>
+                  <h2 class="text-sm font-extrabold">
+                    今日小贴士
+                  </h2>
+                  <p class="mt-1.5 text-xs/5 text-[#756b50]">
+                    练习时先唱出答案再点击，能帮助耳朵更快记住音级关系。
+                  </p>
                 </div>
               </div>
             </section>
@@ -306,21 +336,29 @@ function handleStageAction(stage: Stage) {
             <section class="rounded-[24px] border border-line bg-white p-5">
               <div class="flex items-center justify-between">
                 <div>
-                  <p class="text-xs font-bold text-muted">当前掌握度</p>
-                  <p class="mt-1 text-2xl font-extrabold">12%</p>
+                  <p class="text-xs font-bold text-muted">
+                    当前掌握度
+                  </p>
+                  <p class="mt-1 text-2xl font-extrabold">
+                    12%
+                  </p>
                 </div>
                 <div class="relative grid size-16 place-items-center rounded-full" style="background: conic-gradient(#1f7a55 0 12%, #edf0ed 12% 100%)">
-                  <div class="grid size-12 place-items-center rounded-full bg-white text-xs font-extrabold text-brand">1 / 9</div>
+                  <div class="grid size-12 place-items-center rounded-full bg-white text-xs font-extrabold text-brand">
+                    1 / 9
+                  </div>
                 </div>
               </div>
-              <p class="mt-3 border-t border-line pt-3 text-xs leading-5 text-muted">已掌握唱名基础，下一目标是完成阶段检测。</p>
+              <p class="mt-3 border-t border-line pt-3 text-xs/5 text-muted">
+                已掌握唱名基础，下一目标是完成阶段检测。
+              </p>
             </section>
           </aside>
         </div>
       </main>
 
       <nav class="safe-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-line bg-white/95 px-2 pt-2 backdrop-blur-lg lg:hidden" aria-label="移动端导航">
-        <button v-for="(item, index) in navItems" :key="item" type="button" class="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-extrabold" :class="index === 0 ? 'text-brand' : 'text-muted'" @click="index > 0 && showNotice(`${item}模块将在后续版本开放`)" :aria-current="index === 0 ? 'page' : undefined">
+        <button v-for="(item, index) in navItems" :key="item" type="button" class="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-extrabold" :class="index === 0 ? 'text-brand' : 'text-muted'" :aria-current="index === 0 ? 'page' : undefined" @click="index > 0 && showNotice(`${item}模块将在后续版本开放`)">
           <svg v-if="index === 0" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M4 5.5h6.5v13H4zM13.5 5.5H20v13h-6.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /></svg>
           <svg v-else-if="index === 1" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M5 4v16M5 8h5v12M10 5h5v15M15 10h4v10" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
           <svg v-else-if="index === 2" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
@@ -330,7 +368,9 @@ function handleStageAction(stage: Stage) {
       </nav>
 
       <Transition enter-active-class="transition duration-200" enter-from-class="translate-y-2 opacity-0" leave-active-class="transition duration-150" leave-to-class="translate-y-2 opacity-0">
-        <div v-if="notice" class="fixed bottom-24 left-1/2 z-50 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-full bg-ink px-4 py-2.5 text-center text-xs font-bold text-white shadow-xl lg:bottom-8" role="status">{{ notice }}</div>
+        <div v-if="notice" class="fixed bottom-24 left-1/2 z-50 w-max max-w-[calc(100%-2rem)] -translate-x-1/2 rounded-full bg-ink px-4 py-2.5 text-center text-xs font-bold text-white shadow-xl lg:bottom-8" role="status">
+          {{ notice }}
+        </div>
       </Transition>
     </div>
   </div>

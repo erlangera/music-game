@@ -37,10 +37,10 @@ index.html
 
 ## Build and Delivery
 
-1. `npm run build` 并行执行类型检查和 `vite build`。
+1. `npm run check` 并行执行 ESLint 与 `npm run build`；build 内部并行执行类型检查和 `vite build`。
 2. Vite 将生产资源写入 `dist/`。
 3. `.github/workflows/deploy-pages.yml` 在 `main` 推送、release 发布或手动触发时运行。
-4. Workflow 使用 Node 24、`npm ci` 和 `npm run build`，随后把 `dist/` 发布到 GitHub Pages。
+4. Workflow 使用 Node 24、`npm ci` 和 `npm run check`，随后把 `dist/` 发布到 GitHub Pages。
 
 ## Expected Evolution
 

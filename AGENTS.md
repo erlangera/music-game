@@ -15,11 +15,13 @@
 ```bash
 npm install
 npm run dev
+npm run lint
+npm run check
 npm run build
 npm run preview
 ```
 
-`npm run build` 会并行执行 `vue-tsc --build` 和 Vite 生产构建，是当前最低验证门槛。仓库目前没有 lint、单元测试或 E2E 脚本；不要声称这些检查已经运行。
+`npm run lint` 使用 Antfu preset 检查 Vue、TypeScript 和仓库配置，并通过 `eslint-plugin-better-tailwindcss` 校验 Vue 模板中的 Tailwind CSS 4 class。`npm run check` 并行执行 lint、`vue-tsc --build` 和 Vite 生产构建，是当前最低验证门槛。仓库目前没有单元测试或 E2E 脚本；不要声称这些检查已经运行。
 
 ## Repository Map
 
@@ -68,7 +70,7 @@ npm run preview
 ## Definition of Done
 
 - 实现与用户请求、PRD 的当前范围一致，没有把后续规划顺手扩入。
-- `npm run build` 通过。
+- `npm run check` 通过。
 - 受影响的关键交互在浏览器中完成针对性验证；若无法验证，明确说明。
 - 没有覆盖无关的未提交改动。
 - 新增事实能从代码、配置、测试或明确的产品文档追溯。

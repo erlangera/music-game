@@ -7,6 +7,7 @@
 - TypeScript 6，由 `vue-tsc --build` 做类型检查。
 - Vite 8 负责开发服务器和生产构建。
 - Tailwind CSS 4 通过 `@tailwindcss/vite` 集成。
+- ESLint 使用 Antfu config；`eslint-plugin-better-tailwindcss` 读取 `src/assets/main.css` 并检查 Vue 模板中的 Tailwind class。
 
 具体版本以 `package.json` 和 `package-lock.json` 为准。
 

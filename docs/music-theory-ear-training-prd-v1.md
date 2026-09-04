@@ -644,17 +644,17 @@ type ScaleDegree = 1 | 2 | 3 | 4 | 5 | 6 | 7
 type MidiNote = number // 0–127
 
 interface KeySignature {
-    tonic: PitchClass
-    mode: 'major'
-    displayName: string
-    noteSpellings: string[]
+  tonic: PitchClass
+  mode: 'major'
+  displayName: string
+  noteSpellings: string[]
 }
 
 interface NoteEvent {
-    midi: MidiNote
-    pitchClass: PitchClass
-    degree?: ScaleDegree
-    duration?: number
+  midi: MidiNote
+  pitchClass: PitchClass
+  degree?: ScaleDegree
+  duration?: number
 }
 ```
 
@@ -668,16 +668,16 @@ const MAJOR_SCALE_OFFSETS = [0, 2, 4, 5, 7, 9, 11]
 
 ```ts
 interface ExerciseDefinition {
-    id: string
-    module: 'solfege' | 'keyboard' | 'scale' | 'ear' | 'dictation'
-    type: string
-    level: number
-    allowedDegrees?: ScaleDegree[]
-    allowedKeys?: string[]
-    sequenceLength?: [number, number]
-    ignoreOctave: boolean
-    ignoreRhythm: boolean
-    replayLimit?: number
+  id: string
+  module: 'solfege' | 'keyboard' | 'scale' | 'ear' | 'dictation'
+  type: string
+  level: number
+  allowedDegrees?: ScaleDegree[]
+  allowedKeys?: string[]
+  sequenceLength?: [number, number]
+  ignoreOctave: boolean
+  ignoreRhythm: boolean
+  replayLimit?: number
 }
 ```
 
@@ -685,25 +685,25 @@ interface ExerciseDefinition {
 
 ```ts
 interface ExerciseQuestion {
-    id: string
-    definitionId: string
-    seed: string
-    prompt: unknown
-    expectedAnswer: unknown
-    audioSpec?: unknown
-    knowledgeTags: string[]
+  id: string
+  definitionId: string
+  seed: string
+  prompt: unknown
+  expectedAnswer: unknown
+  audioSpec?: unknown
+  knowledgeTags: string[]
 }
 
 interface ExerciseAttempt {
-    questionId: string
-    sessionId: string
-    answer: unknown
-    isCorrect: boolean
-    itemResults?: boolean[]
-    responseTimeMs: number
-    replayCount: number
-    hintCount: number
-    createdAt: string
+  questionId: string
+  sessionId: string
+  answer: unknown
+  isCorrect: boolean
+  itemResults?: boolean[]
+  responseTimeMs: number
+  replayCount: number
+  hintCount: number
+  createdAt: string
 }
 ```
 
