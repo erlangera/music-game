@@ -40,4 +40,4 @@
 
 ## State
 
-当前首页临时交互存在于 `HomeView.vue`，页面切换由路由负责，唱名题目、判分和本轮结果存在于 `SolfegeMemoryPractice.vue`。这些业务状态均不持久化；刷新训练路由会开始新一轮。引入全局状态库前，应先证明存在跨页面共享、复杂派生状态或调试需求；简单状态优先使用组件状态或 composable。
+当前首页临时交互存在于 `HomeView.vue`，页面切换由路由负责，唱名训练的设置、会话、逐项判分和本轮结果存在于 `SolfegeMemoryPractice.vue`；类型和受控题目生成位于 `src/domain/solfegePractice.ts`。这些业务状态均不持久化；刷新训练路由会重新进入设置弹窗。引入全局状态库前，应先证明存在跨页面共享、复杂派生状态或调试需求；简单状态优先使用组件状态或 composable。

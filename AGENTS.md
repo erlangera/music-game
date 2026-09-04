@@ -5,7 +5,7 @@
 ## Project Snapshot
 
 - 产品：面向中文简谱初学者的音高与乐理训练 Web 应用，工作名“音阶阶”。
-- 当前阶段：首页/学习路径原型和模块一 S1/S2 双向文字练习；完整 MVP 仍以 PRD 为规划目标。
+- 当前阶段：首页/学习路径原型和模块一 S1–S4 双向文字核心交互；已支持单项/序列、固定 10 题/无限练习，但完整记录、复盘和解锁闭环仍以 PRD 为规划目标。
 - 技术栈：Vue 3、Vue Router、TypeScript、Vite、Tailwind CSS 4。
 - 包管理：npm，锁文件为 `package-lock.json`。
 - 部署：GitHub Actions 构建并发布到 GitHub Pages，站点 base path 为 `/music-game/`。
@@ -29,7 +29,8 @@ npm run preview
 - `src/App.vue`：根路由出口。
 - `src/router/index.ts`：页面路由、hash history、滚动和页面标题。
 - `src/views/`：首页与训练页的页面级编排。
-- `src/components/SolfegeMemoryPractice.vue`：模块一双向唱名记忆练习、即时反馈和本轮报告。
+- `src/components/SolfegeMemoryPractice.vue`：模块一训练设置、双向单项/序列交互、即时反馈和本轮汇总。
+- `src/domain/solfegePractice.ts`：模块一领域类型、平衡出题、方向队列和唱名/简谱映射。
 - `src/assets/main.css`：Tailwind 入口、设计 token 和全局基础样式。
 - `public/`：不经打包处理的静态资源。
 - `docs/`：项目长期知识；入口见 `docs/index.md`。

@@ -212,7 +212,7 @@ function handleStageAction(stage: Stage) {
                     唱名记忆训练
                   </h2>
                   <p class="mt-3 text-sm/6 text-white/75">
-                    看到一个唱名，从随机排列的数字中选出对应简谱。完成本课即可开启阶段检测。
+                    从单项到 12 项序列，双向练习唱名与简谱转换。完成本课即可开启阶段检测。
                   </p>
                   <button type="button" class="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-lime px-6 text-sm font-extrabold text-[#24310d] shadow-[0_6px_18px_rgb(15_42_28/0.18)] transition hover:-translate-y-0.5 hover:bg-[#e1f176] sm:w-auto" @click="startSolfegePractice">
                     开始训练

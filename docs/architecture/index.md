@@ -16,7 +16,9 @@ index.html
                       -> rendered learning-path prototype
                  -> /src/views/SolfegePracticeView.vue
                       -> /src/components/SolfegeMemoryPractice.vue
-                           -> question queue, shuffled options and scoring state
+                           -> setup, session and feedback state
+                           -> /src/domain/solfegePractice.ts
+                                -> question types and controlled generation
 ```
 
 ## Source Responsibilities
@@ -28,11 +30,12 @@ index.html
 | `src/App.vue` | 根路由出口 | 不承载页面业务逻辑 |
 | `src/views/HomeView.vue` | 首页布局、阶段展示和临时交互 | 首页路由 `/` |
 | `src/views/SolfegePracticeView.vue` | 唱名训练页编排和返回首页导航 | 训练路由 `/solfege` |
-| `src/components/SolfegeMemoryPractice.vue` | 唱名 S1/S2 双向文字练习、即时判分和本轮报告 | 状态仅在组件内存中，退出或刷新后不保留 |
+| `src/components/SolfegeMemoryPractice.vue` | 唱名 S1–S4 核心设置、单项/序列交互、会话与汇总 | 状态仅在组件内存中，退出或刷新后不保留 |
+| `src/domain/solfegePractice.ts` | 唱名类型、平衡牌组、方向队列和题目映射 | 不依赖 Vue，可传入随机函数 |
 | `src/assets/main.css` | Tailwind 入口、设计 token、全局基线 | 当前实际被 `main.ts` 导入 |
 | `src/assets/base.css` | Vue starter 遗留样式 | 当前未被入口导入 |
 | `src/components/` | 可复用或可独立表达的交互组件 | 当前包含唱名记忆训练；目录中仍保留未引用的 Vue starter 示例 |
-| `public/` | 原样发布的静态资源 | 当前包含 favicon |
+| `public/` | 原样发布的静态资源 | 已纳入版本控制的资源以当前目录内容为准；声音模式尚未接入 |
 | `vite.config.ts` | Vue/Tailwind 插件、别名、部署 base | GitHub Pages 路径依赖 base 配置 |
 
 ## Build and Delivery

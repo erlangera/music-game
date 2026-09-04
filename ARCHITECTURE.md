@@ -13,7 +13,8 @@ Browser
             -> src/views/HomeView.vue
             -> src/views/SolfegePracticeView.vue
                  -> src/components/SolfegeMemoryPractice.vue
-                      -> local question and scoring state
+                      -> local setup, session and scoring state
+                      -> src/domain/solfegePractice.ts
        -> Tailwind utilities + src/assets/main.css tokens
 ```
 
@@ -26,15 +27,15 @@ Browser
 - 静态检查：ESLint + Antfu config，并校验 Vue 模板中的 Tailwind class。
 - 构建：Vite，生产资源输出到 `dist/`。
 - 发布：GitHub Actions -> GitHub Pages，公共路径为 `/music-game/`。
-- 数据：当前仅为组件内静态数据；PRD 中的学习记录、本地存储、音频和 MIDI 均尚未实现。
+- 数据：静态唱名领域数据和题目生成位于 `src/domain/`，设置、会话和汇总状态仅存在组件内存中；PRD 中的逐项答题记录、本地存储、错题复盘、音频和 MIDI 均尚未实现。
 
 ## Current Constraints
 
 - 当前只有首页 `/` 和唱名训练 `/solfege` 两个真实路由；其他导航入口仍是规划占位。
-- 唱名 S1/S2 已拆为独立组件，但还没有共享训练引擎。
+- 唱名 S1–S4 的核心文字交互已拆为独立组件，并把题型与受控生成提取到纯 TypeScript 领域模块；逐项答题记录、随机题复现和错题回顾尚未实现，其他训练模块也尚无共享训练引擎。
 - 仓库中保留 Vue starter components，但当前入口没有引用它们。
 - 尚未建立自动化测试；`npm run check` 是当前仓库级质量门槛，覆盖 lint、类型检查和生产构建。
-- 产品需求覆盖多个训练模块，但当前实现只代表首页原型，不能据此推断训练引擎已存在。
+- 产品需求覆盖多个训练模块，但当前实现只代表首页和模块一交互原型，不能据此推断完整训练引擎、记录或解锁闭环已存在。
 
 ## Detailed Knowledge
 
