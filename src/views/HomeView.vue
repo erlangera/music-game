@@ -30,7 +30,7 @@ const stages: Stage[] = [
   {
     step: '02',
     title: '认识钢琴键位',
-    description: '找到 C–B 自然音，熟悉键盘规律',
+    description: '认识黑白键与十二音，练习音名序列',
     progress: 35,
     lessons: '2 / 6 课',
     tone: 'yellow',
@@ -91,6 +91,11 @@ function startSolfegePractice() {
 }
 
 function handleStageAction(stage: Stage) {
+  if (stage.step === '02') {
+    void router.push({ name: 'keyboard' })
+    return
+  }
+
   if (stage.step === '01') {
     startSolfegePractice()
     return

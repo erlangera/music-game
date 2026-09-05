@@ -14,7 +14,8 @@
     "type-check": "vue-tsc --build",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "check": "run-p lint build"
+    "test": "node --test src/domain/__tests__/*.test.ts",
+    "check": "run-p lint build test"
   },
   "dependencies": {
     "vue": "^3.5.40",

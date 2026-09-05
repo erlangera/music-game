@@ -7,6 +7,7 @@ export default antfu(
     type: 'app',
     typescript: true,
     vue: true,
+    test: false,
   },
   {
     ...betterTailwindcss.configs.recommended,

@@ -23,6 +23,8 @@ index.html
 
 ## Source Responsibilities
 
+钢琴模块使用独立 `KeyboardPracticeView.vue` → `KeyboardMemoryPractice.vue` → `PianoKeyboard.vue`，领域逻辑位于 `keyboardPractice.ts`，复用唱名领域的纯洗牌函数；`usePianoAudio.ts` 封装单音合成和生命周期清理。两个训练模块保持独立会话，尚未抽象通用训练引擎。
+
 | 路径 | 当前职责 | 备注 |
 | --- | --- | --- |
 | `src/main.ts` | 应用启动、路由注册和全局样式导入 | 保持轻量，不承载业务逻辑 |
@@ -35,12 +37,12 @@ index.html
 | `src/assets/main.css` | Tailwind 入口、设计 token、全局基线 | 当前实际被 `main.ts` 导入 |
 | `src/assets/base.css` | Vue starter 遗留样式 | 当前未被入口导入 |
 | `src/components/` | 可复用或可独立表达的交互组件 | 当前包含唱名记忆训练；目录中仍保留未引用的 Vue starter 示例 |
-| `public/` | 原样发布的静态资源 | 已纳入版本控制的资源以当前目录内容为准；声音模式尚未接入 |
+| `public/` | 原样发布的静态资源 | 包含唱名 MP3；钢琴单音由 Web Audio 合成 |
 | `vite.config.ts` | Vue/Tailwind 插件、别名、部署 base | GitHub Pages 路径依赖 base 配置 |
 
 ## Build and Delivery
 
-1. `npm run check` 并行执行 ESLint 与 `npm run build`；build 内部并行执行类型检查和 `vite build`。
+1. `npm run check` 并行执行 ESLint、`npm test` 和 `npm run build`；build 内部并行执行类型检查和 `vite build`。测试使用 Node 原生 TypeScript 支持，无新增测试依赖。
 2. Vite 将生产资源写入 `dist/`。
 3. `.github/workflows/deploy-pages.yml` 在 `main` 推送、release 发布或手动触发时运行。
 4. Workflow 使用 Node 24、`npm ci` 和 `npm run check`，随后把 `dist/` 发布到 GitHub Pages。

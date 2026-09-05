@@ -10,6 +10,7 @@ npm run check
 
 - `npm run lint`：使用 Antfu preset 检查 Vue、TypeScript 和仓库配置；使用 `eslint-plugin-better-tailwindcss` 检查 Vue 模板中的 Tailwind CSS 4 class；
 - `npm run build`：运行 Vue/TypeScript 类型检查和 Vite 生产构建。
+- `npm test`：Node 原生测试器运行钢琴领域确定性测试（所有1–12序列长度、十二音与等价写法、方向配额，以及可控时钟下的高亮生命周期）。
 
 可使用 `npm run lint:fix` 应用 ESLint 的安全自动修复；CI 只检查，不自动修改文件。
 
@@ -17,7 +18,7 @@ npm run check
 
 仓库目前没有以下脚本或配置：
 
-- 单元/组件测试；
+- Vue组件测试（钢琴领域单元测试已建立）；
 - E2E 测试；
 - 覆盖率门槛。
 

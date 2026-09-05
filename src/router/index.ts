@@ -16,6 +16,12 @@ const router = createRouter({
       meta: { title: '唱名记忆训练 · 音阶阶' },
     },
     {
+      path: '/keyboard',
+      name: 'keyboard',
+      component: () => import('@/views/KeyboardPracticeView.vue'),
+      meta: { title: '钢琴键位训练 · 音阶阶' },
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },

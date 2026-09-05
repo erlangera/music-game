@@ -5,7 +5,7 @@
 ## Project Snapshot
 
 - 产品：面向中文简谱初学者的音高与乐理训练 Web 应用，工作名“音阶阶”。
-- 当前阶段：首页/学习路径原型和模块一 S1–S4 双向文字核心交互；已支持单项/序列、固定 10 题/无限练习，但完整记录、复盘和解锁闭环仍以 PRD 为规划目标。
+- 当前阶段：首页/学习路径原型、模块一 S1–S4 核心交互和钢琴十二音双向单音/序列；已支持单项/序列、固定 10 题/无限练习，但完整记录、复盘和解锁闭环仍以 PRD 为规划目标。
 - 技术栈：Vue 3、Vue Router、TypeScript、Vite、Tailwind CSS 4。
 - 包管理：npm，锁文件为 `package-lock.json`。
 - 部署：GitHub Actions 构建并发布到 GitHub Pages，站点 base path 为 `/music-game/`。
@@ -16,12 +16,13 @@
 npm install
 npm run dev
 npm run lint
+npm test
 npm run check
 npm run build
 npm run preview
 ```
 
-`npm run lint` 使用 Antfu preset 检查 Vue、TypeScript 和仓库配置，并通过 `eslint-plugin-better-tailwindcss` 校验 Vue 模板中的 Tailwind CSS 4 class。`npm run check` 并行执行 lint、`vue-tsc --build` 和 Vite 生产构建，是当前最低验证门槛。仓库目前没有单元测试或 E2E 脚本；不要声称这些检查已经运行。
+`npm run lint` 使用 Antfu preset 检查 Vue、TypeScript 和仓库配置，并通过 `eslint-plugin-better-tailwindcss` 校验 Vue 模板中的 Tailwind CSS 4 class。`npm run check` 执行 lint、`vue-tsc --build`、Vite 生产构建和 `npm test`，是当前最低验证门槛。`npm test` 使用 Node 原生测试器验证钢琴领域规则；尚无组件测试和浏览器 E2E。
 
 ## Repository Map
 
@@ -31,6 +32,9 @@ npm run preview
 - `src/views/`：首页与训练页的页面级编排。
 - `src/components/SolfegeMemoryPractice.vue`：模块一训练设置、双向单项/序列交互、即时反馈和本轮汇总。
 - `src/domain/solfegePractice.ts`：模块一领域类型、平衡出题、方向队列和唱名/简谱映射。
+- `src/components/KeyboardMemoryPractice.vue`、`PianoKeyboard.vue`：钢琴训练会话、反馈和虚拟琴键。
+- `src/domain/keyboardPractice.ts`、`src/domain/__tests__/`：钢琴生成、判分与确定性测试。
+- `src/composables/usePianoAudio.ts`：基础 Web Audio 单音合成和清理。
 - `src/assets/main.css`：Tailwind 入口、设计 token 和全局基础样式。
 - `public/`：不经打包处理的静态资源。
 - `docs/`：项目长期知识；入口见 `docs/index.md`。
