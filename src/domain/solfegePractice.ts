@@ -15,6 +15,7 @@ export interface PracticeQuestion {
 }
 
 export interface PracticeSettings {
+  dictation: boolean
   mode: PracticeMode
   sequenceLength: number
 }

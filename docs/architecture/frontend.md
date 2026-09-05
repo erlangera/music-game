@@ -28,7 +28,7 @@
 - 页面级编排留在 view/page；
 - 可独立表达且重复出现的交互提取为 component；
 - 乐理规则、题目生成和评分放在纯 TypeScript domain 模块；
-- 浏览器音频、MIDI、本地存储等副作用放在 adapter/service 层。
+- 浏览器音频、MIDI、本地存储等副作用放在独立 adapter/service 或 composable 中；当前唱名 MP3 播放、取消与错误状态由 `src/composables/useSolfegeAudio.ts` 管理。
 
 ## Interaction and Accessibility
 
