@@ -3,7 +3,7 @@ import { namedPitch, pitches } from './piano.ts'
 import { shuffle } from './solfegePractice.ts'
 
 export type { NamedPitch, Pitch } from './piano.ts'
-export { namedPitch, pianoKeys, pitches, pitchNames } from './piano.ts'
+export { namedPitch, pianoKeys, pianoKeyShortcuts, pitches, pitchNames } from './piano.ts'
 export type KeyboardDirection = 'name-to-key' | 'key-to-name'
 export type KeyboardDirectionSetting = KeyboardDirection | 'mixed'
 export interface KeyboardSettings {

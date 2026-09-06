@@ -1,81 +1,171 @@
 <script setup lang="ts">
-import type { NamedPitch, Pitch } from '@/domain/piano'
-import { pianoKeys, pitchNames } from '@/domain/piano'
+import type { PianoKeyMark, PianoKeyShortcut } from '@/domain/piano'
+import type { MidiNote } from '@/domain/pitch'
+import { computed, ref } from 'vue'
+import { createPianoKeyboardKeys, pitchNames, resolvePianoKeyState } from '@/domain/piano'
+import { midiNote, scientificPitch } from '@/domain/pitch'
 
 const props = defineProps<{
   compact?: boolean
+  depressedNotes?: readonly MidiNote[]
+  from?: MidiNote
   interactive?: boolean
-  target?: Pitch
-  correct?: NamedPitch
-  wrong?: NamedPitch
-  pressed?: readonly Pitch[]
+  marks?: readonly PianoKeyMark[]
+  minimumWhiteKeyWidth?: number
+  shortcuts?: readonly PianoKeyShortcut[]
   showLabels?: boolean
+  to?: MidiNote
 }>()
+
 const emit = defineEmits<{
-  choose: [pitch: Pitch]
-  press: [pitch: Pitch]
-  release: [pitch: Pitch]
+  noteOn: [midi: MidiNote]
+  noteOff: [midi: MidiNote]
+  select: [midi: MidiNote]
 }>()
-function label(key: typeof pianoKeys[number]) {
-  const kind = key.black ? '黑键' : '白键'
-  const position = pianoKeys.filter(item => item.black === key.black).findIndex(item => item.pitch === key.pitch) + 1
-  return `从左起第 ${position} 个${kind}${props.interactive ? `，快捷键 ${key.shortcut.toUpperCase()}` : ''}${props.target === key.pitch ? '，正在展示' : ''}${props.correct?.pitch === key.pitch ? `，正确答案 ${props.correct.label}` : ''}${props.wrong?.pitch === key.pitch ? `，你的选择 ${props.wrong.label}` : ''}`
+
+const pointerDepressedNotes = ref<MidiNote[]>([])
+const from = computed(() => props.from ?? midiNote(60))
+const to = computed(() => props.to ?? midiNote(71))
+const keys = computed(() => createPianoKeyboardKeys(from.value, to.value))
+const whiteKeyCount = computed(() => keys.value.filter(key => !key.black).length)
+const marksByMidi = computed(() => {
+  const result = new Map<MidiNote, PianoKeyMark[]>()
+  for (const mark of props.marks ?? []) {
+    result.set(mark.midi, [...result.get(mark.midi) ?? [], mark])
+  }
+  return result
+})
+const shortcutsByMidi = computed(() => new Map((props.shortcuts ?? []).map(item => [item.midi, item.key])))
+const keyboardLabel = computed(() => {
+  const whiteKeys = keys.value.filter(key => !key.black).length
+  const blackKeys = keys.value.length - whiteKeys
+  return `${scientificPitch(from.value)} 到 ${scientificPitch(to.value)} 的钢琴，${whiteKeys} 个白键和 ${blackKeys} 个黑键`
+})
+const keyboardStyle = computed(() => props.minimumWhiteKeyWidth
+  ? { minWidth: `${whiteKeyCount.value * props.minimumWhiteKeyWidth}px` }
+  : undefined)
+
+function marksFor(midi: MidiNote) {
+  return marksByMidi.value.get(midi) ?? []
 }
 
-function handlePointerDown(event: PointerEvent, pitch: Pitch) {
+function state(midi: MidiNote) {
+  return resolvePianoKeyState(marksFor(midi))
+}
+
+function annotation(midi: MidiNote) {
+  return marksFor(midi).find(mark => mark.label || mark.detail)
+}
+
+function shortcut(midi: MidiNote) {
+  return shortcutsByMidi.value.get(midi)
+}
+
+function primaryLabel(midi: MidiNote) {
+  return annotation(midi)?.label ?? pitchNames[midi % 12]![0]
+}
+
+function secondaryLabel(midi: MidiNote) {
+  return annotation(midi)?.detail ?? shortcut(midi)?.toUpperCase()
+}
+
+function accessibleDetail(midi: MidiNote) {
+  const detail = annotation(midi)?.detail
+  return detail && /^\d+$/.test(detail) ? `第 ${detail} 级` : detail
+}
+
+function isDepressed(midi: MidiNote) {
+  return pointerDepressedNotes.value.includes(midi) || props.depressedNotes?.includes(midi)
+}
+
+function accessibleLabel(midi: MidiNote) {
+  const key = keys.value.find(item => item.midi === midi)!
+  const keyAnnotation = annotation(midi)
+  const detail = accessibleDetail(midi)
+  const identity = props.showLabels
+    ? `${primaryLabel(midi)}${detail ? `，${detail}` : ''}`
+    : `从左起第 ${key.position} 个${key.black ? '黑键' : '白键'}`
+  const keyShortcut = props.interactive && shortcut(midi) ? `，快捷键 ${shortcut(midi)!.toUpperCase()}` : ''
+  const stateLabels = {
+    active: '，当前高亮',
+    correct: `，正确琴键${keyAnnotation?.label ? ` ${keyAnnotation.label}` : ''}`,
+    member: '，音阶成员',
+    wrong: `，错误琴键${keyAnnotation?.label ? ` ${keyAnnotation.label}` : ''}`,
+  }
+  const keyState = state(midi)
+  const stateText = keyState ? stateLabels[keyState] : ''
+  return `${identity}${keyShortcut}${stateText}`
+}
+
+function handlePointerDown(event: PointerEvent, midi: MidiNote) {
   if (!props.interactive) {
     return
   }
   ;(event.currentTarget as HTMLElement).setPointerCapture(event.pointerId)
-  emit('press', pitch)
+  pointerDepressedNotes.value = [...pointerDepressedNotes.value, midi]
+  emit('noteOn', midi)
 }
 
-function handlePointerEnd(pitch: Pitch) {
+function handlePointerEnd(midi: MidiNote) {
   if (props.interactive) {
-    emit('release', pitch)
+    pointerDepressedNotes.value = pointerDepressedNotes.value.filter(item => item !== midi)
+    emit('noteOff', midi)
   }
 }
 </script>
 
 <template>
-  <div class="relative isolate w-full" :class="compact ? 'h-28 sm:h-48' : 'h-48 sm:h-60'" role="group" aria-label="一个八度钢琴，七个白键和五个黑键">
-    <button
-      v-for="key in pianoKeys" :key="key.pitch" type="button" data-piano-key
-      class="absolute top-0 flex min-w-0 items-end justify-center rounded-b-md border pb-3 transition-colors"
-      :class="[key.black ? 'z-10 h-[60%] w-[10%] -translate-x-1/2 border-ink bg-ink text-white shadow-md' : 'h-full w-[14.285714%] border-line bg-white text-ink', { 'cursor-pointer': interactive }]"
-      :style="{ left: `${key.left}%` }"
-      :data-state="correct?.pitch === key.pitch ? 'correct' : wrong?.pitch === key.pitch ? 'wrong' : target === key.pitch ? 'target' : pressed?.includes(key.pitch) ? 'pressed' : undefined"
-      :disabled="!interactive" :aria-label="showLabels ? `${pitchNames[key.pitch]![0]}，快捷键 ${key.shortcut.toUpperCase()}` : label(key)"
-      :aria-pressed="showLabels ? pressed?.includes(key.pitch) : undefined"
-      @click="emit('choose', key.pitch)" @pointerdown="handlePointerDown($event, key.pitch)"
-      @pointerup="handlePointerEnd(key.pitch)" @pointercancel="handlePointerEnd(key.pitch)"
+  <div :style="keyboardStyle">
+    <div
+      class="relative isolate w-full" :class="compact ? 'h-28 sm:h-48' : 'h-48 sm:h-60'"
+      role="group" :aria-label="keyboardLabel"
     >
-      <span v-if="correct?.pitch === key.pitch || wrong?.pitch === key.pitch" class="flex flex-col items-center text-xs font-extrabold sm:text-lg">
-        <span>{{ correct?.pitch === key.pitch ? '✓' : '×' }}</span>{{ correct?.pitch === key.pitch ? correct.label : wrong?.label }}
-      </span>
-      <span v-else-if="target === key.pitch" class="text-xl" aria-hidden="true">●</span>
-      <span v-else-if="showLabels" class="flex flex-col items-center text-[10px] leading-tight font-extrabold sm:text-sm">
-        <span>{{ pitchNames[key.pitch]![0] }}</span>
-        <span class="mt-0.5 opacity-55">{{ key.shortcut.toUpperCase() }}</span>
-      </span>
-    </button>
+      <button
+        v-for="key in keys" :key="key.midi" type="button" data-piano-key
+        class="absolute top-0 flex min-w-0 items-end justify-center rounded-b-md border pb-3"
+        :class="[key.black ? 'z-10 h-[60%] -translate-x-1/2 border-ink bg-ink text-white shadow-md' : 'h-full border-line bg-white text-ink', { 'cursor-pointer': interactive }]"
+        :style="{ left: `${key.left}%`, width: `${key.width}%` }"
+        :data-key-color="key.black ? 'black' : 'white'" :data-state="state(key.midi)"
+        :data-depressed="isDepressed(key.midi) || undefined"
+        :disabled="!interactive" :aria-label="accessibleLabel(key.midi)"
+        :aria-pressed="interactive ? isDepressed(key.midi) : undefined"
+        @click="emit('select', key.midi)" @pointerdown="handlePointerDown($event, key.midi)"
+        @pointerup="handlePointerEnd(key.midi)" @pointercancel="handlePointerEnd(key.midi)"
+      >
+        <span v-if="showLabels" class="flex flex-col items-center text-[9px] leading-tight font-extrabold sm:text-sm">
+          <span>{{ primaryLabel(key.midi) }}</span>
+          <span v-if="secondaryLabel(key.midi)" class="mt-0.5 opacity-60">{{ secondaryLabel(key.midi) }}</span>
+        </span>
+        <span v-else-if="state(key.midi) === 'correct'" class="flex flex-col items-center text-xs font-extrabold sm:text-lg">
+          <span aria-hidden="true">✓</span>{{ annotation(key.midi)?.label }}
+        </span>
+        <span v-else-if="state(key.midi) === 'wrong'" class="flex flex-col items-center text-xs font-extrabold sm:text-lg">
+          <span aria-hidden="true">×</span>{{ annotation(key.midi)?.label }}
+        </span>
+        <span v-else-if="state(key.midi) === 'active'" class="text-xl" aria-hidden="true">●</span>
+      </button>
+    </div>
   </div>
 </template>
 
 <style scoped>
-[data-piano-key]:focus-visible { outline-offset: -4px; }
-[data-piano-key] { touch-action: none; user-select: none; }
-[data-piano-key]:enabled:hover { box-shadow: inset 0 0 0 3px var(--color-brand); }
-[data-state="target"] { background: var(--color-brand-soft); color: var(--color-brand-dark); box-shadow: inset 0 0 0 3px var(--color-brand); animation: identify 600ms ease-out; }
-[data-state="correct"] { background: var(--color-brand-soft); color: var(--color-brand-dark); box-shadow: inset 0 0 0 3px var(--color-brand); }
-[data-state="wrong"] { background: var(--color-error-soft); color: var(--color-error); box-shadow: inset 0 0 0 3px var(--color-error); }
-[data-state="pressed"] { background: var(--color-lime); color: var(--color-ink); box-shadow: inset 0 0 0 3px var(--color-brand); transform: translateY(3px); }
-@keyframes identify {
-  0%, 33% { background: var(--color-brand); color: white; }
-  100% { background: var(--color-brand-soft); color: var(--color-brand-dark); }
+[data-piano-key] {
+  touch-action: none;
+  user-select: none;
+  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease, filter 150ms ease, transform 90ms ease;
 }
+[data-piano-key]:focus-visible { outline-offset: -4px; }
+[data-piano-key]:enabled:hover { filter: brightness(0.97); }
+[data-key-color="white"][data-state="member"] { background: color-mix(in srgb, var(--color-brand-soft) 62%, white); box-shadow: inset 0 0 0 2px rgb(31 122 85 / 0.25); }
+[data-key-color="black"][data-state="member"] { color: white; background: color-mix(in srgb, var(--color-ink) 82%, var(--color-brand-dark)); box-shadow: inset 0 0 0 2px var(--color-brand), 0 4px 10px rgb(23 34 29 / 0.24); }
+[data-key-color="white"][data-state="active"] { color: var(--color-ink); background: var(--color-lime); box-shadow: inset 0 0 0 3px var(--color-brand); }
+[data-key-color="black"][data-state="active"] { color: white; background: var(--color-ink); box-shadow: inset 0 0 0 4px var(--color-lime), 0 4px 12px rgb(22 93 64 / 0.32); }
+[data-key-color="white"][data-state="correct"] { color: var(--color-brand-dark); background: var(--color-brand-soft); box-shadow: inset 0 0 0 3px var(--color-brand); }
+[data-key-color="black"][data-state="correct"] { color: white; background: var(--color-brand); box-shadow: inset 0 0 0 4px var(--color-brand-soft), 0 4px 12px rgb(22 93 64 / 0.32); }
+[data-key-color="white"][data-state="wrong"] { color: var(--color-error); background: var(--color-error-soft); box-shadow: inset 0 0 0 3px var(--color-error); }
+[data-key-color="black"][data-state="wrong"] { color: white; background: var(--color-error); box-shadow: inset 0 0 0 4px var(--color-error-soft), 0 4px 12px rgb(172 54 54 / 0.28); }
+[data-depressed="true"] { transform: translateY(3px); }
 @media (prefers-reduced-motion: reduce) {
-  [data-state="target"] { animation: none; }
   [data-piano-key] { transition: none; }
 }
 </style>

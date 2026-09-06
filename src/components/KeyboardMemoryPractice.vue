@@ -1,9 +1,12 @@
 <script setup lang="ts">
-import type { KeyboardDirectionSetting, KeyboardQuestion, KeyboardSettings, NamedPitch, Pitch } from '@/domain/keyboardPractice'
+import type { KeyboardDirectionSetting, KeyboardQuestion, KeyboardSettings, NamedPitch } from '@/domain/keyboardPractice'
+import type { PianoKeyMark } from '@/domain/piano'
+import type { MidiNote } from '@/domain/pitch'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
-import { usePianoAudio } from '@/composables/usePianoAudio'
-import { createHighlightPlayer, createKeyboardGenerator, isCorrectKey, namedPitch, pianoKeys } from '@/domain/keyboardPractice'
+import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
+import { createHighlightPlayer, createKeyboardGenerator, isCorrectKey, namedPitch, pianoKeys, pianoKeyShortcuts } from '@/domain/keyboardPractice'
+import { pitchClassOf } from '@/domain/pitch'
 
 const emit = defineEmits<{ exit: [] }>()
 const directions: { value: KeyboardDirectionSetting, label: string }[] = [
@@ -29,7 +32,7 @@ const wrongCount = ref(0)
 const questionNumber = ref(0)
 const heading = ref<HTMLElement>()
 const nextButton = ref<HTMLButtonElement>()
-const { play, prepare: prepareAudio, unlock: unlockAudio, stop, status: audioStatus, error: audioError } = usePianoAudio()
+const { activeNotes, error: audioError, playNote, prepare: prepareAudio, status: audioStatus, stop, unlock: unlockAudio } = useInstrumentPlayer('piano')
 let generate = createKeyboardGenerator(active.value)
 let advanceTimer: ReturnType<typeof setTimeout> | undefined
 const heldKeys = new Set<string>()
@@ -61,6 +64,22 @@ const playingAudioMessage = computed(() => {
     case 'unavailable': return '声音暂不可用，你仍可继续答题。'
     default: return ''
   }
+})
+const keyboardMarks = computed<PianoKeyMark[]>(() => {
+  const marks: PianoKeyMark[] = activeNotes.value.map(midi => ({ midi, state: 'active' }))
+  if (!nameToKey.value && !locked.value && displayIndex.value !== null) {
+    const item = question.value?.sequence[displayIndex.value]
+    if (item) {
+      marks.push({ midi: pianoKeys[item.pitch]!.midi, state: 'active' })
+    }
+  }
+  if (locked.value && currentItem.value) {
+    marks.push({ midi: pianoKeys[currentItem.value.pitch]!.midi, state: 'correct', label: currentItem.value.label })
+  }
+  if (locked.value && !wasCorrect.value && nameToKey.value && selected.value) {
+    marks.push({ midi: pianoKeys[selected.value.pitch]!.midi, state: 'wrong', label: selected.value.label })
+  }
+  return marks
 })
 
 function clearTransition() {
@@ -142,7 +161,7 @@ function choose(note: NamedPitch) {
   }
   selected.value = note
   if (nameToKey.value) {
-    void play(pianoKeys[note.pitch]!.midi)
+    void playNote(pianoKeys[note.pitch]!.midi)
   }
   if (isCorrectKey(currentItem.value, note)) {
     answerIndex.value++
@@ -163,8 +182,8 @@ function choose(note: NamedPitch) {
     void nextTick(() => nextButton.value?.focus())
   }
 }
-function chooseKey(pitch: Pitch) {
-  choose(namedPitch(pitch))
+function chooseKey(midi: MidiNote) {
+  choose(namedPitch(pitchClassOf(midi)))
 }
 
 function onKeyDown(event: KeyboardEvent) {
@@ -187,7 +206,7 @@ function onKeyDown(event: KeyboardEvent) {
     : undefined
   if (note) {
     event.preventDefault()
-    chooseKey(note.pitch)
+    chooseKey(note.midi)
   }
 }
 function onKeyUp(event: KeyboardEvent) {
@@ -331,9 +350,8 @@ onBeforeUnmount(() => {
         </div>
         <PianoKeyboard
           :key="`${questionNumber}-${displayRun}`" :interactive="nameToKey && !locked"
-          :target="!nameToKey && !locked && displayIndex !== null ? question.sequence[displayIndex]?.pitch : undefined"
-          :correct="locked ? currentItem : undefined" :wrong="locked && !wasCorrect && nameToKey ? selected : undefined"
-          @choose="chooseKey"
+          :marks="keyboardMarks" :shortcuts="pianoKeyShortcuts"
+          @select="chooseKey"
         />
         <div class="my-5 min-h-36 sm:min-h-24">
           <div v-if="!nameToKey" class="grid grid-cols-4 gap-2 sm:grid-cols-6 sm:gap-3" role="group" aria-label="选择音名">

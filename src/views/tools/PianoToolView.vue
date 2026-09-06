@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import type { Pitch } from '@/domain/piano'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
-import { usePianoAudio } from '@/composables/usePianoAudio'
-import { pianoKeys } from '@/domain/piano'
+import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
+import { pianoKeys, pianoKeyShortcuts } from '@/domain/piano'
 
-const { prepare, startNote, stopNote, stop, setVolume, status, error } = usePianoAudio()
-const pressed = ref<Pitch[]>([])
+const { activeNotes, error, prepare, pressNote, releaseNote, setVolume, status, stop } = useInstrumentPlayer('piano')
+const keyMarks = computed(() => activeNotes.value.map(midi => ({ midi, state: 'active' as const })))
 const volume = ref(72)
 
 const statusText = computed(() => ({
@@ -16,24 +15,6 @@ const statusText = computed(() => ({
   fallback: '当前使用基础合成音色',
   unavailable: '声音暂不可用',
 }[status.value]))
-
-function press(pitch: Pitch) {
-  if (pressed.value.includes(pitch)) {
-    return
-  }
-  pressed.value = [...pressed.value, pitch]
-  void startNote(pianoKeys[pitch]!.midi)
-}
-
-function release(pitch: Pitch) {
-  pressed.value = pressed.value.filter(item => item !== pitch)
-  stopNote(pianoKeys[pitch]!.midi)
-}
-
-function releaseAll() {
-  pressed.value = []
-  stop()
-}
 
 function updateVolume() {
   setVolume(volume.value / 100)
@@ -46,7 +27,7 @@ function handleKeyDown(event: KeyboardEvent) {
   const key = pianoKeys.find(item => item.shortcut === event.key.toLowerCase())
   if (key) {
     event.preventDefault()
-    press(key.pitch)
+    void pressNote(key.midi)
   }
 }
 
@@ -54,7 +35,7 @@ function handleKeyUp(event: KeyboardEvent) {
   const key = pianoKeys.find(item => item.shortcut === event.key.toLowerCase())
   if (key) {
     event.preventDefault()
-    release(key.pitch)
+    releaseNote(key.midi)
   }
 }
 
@@ -63,13 +44,13 @@ onMounted(() => {
   updateVolume()
   window.addEventListener('keydown', handleKeyDown)
   window.addEventListener('keyup', handleKeyUp)
-  window.addEventListener('blur', releaseAll)
+  window.addEventListener('blur', stop)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('keydown', handleKeyDown)
   window.removeEventListener('keyup', handleKeyUp)
-  window.removeEventListener('blur', releaseAll)
+  window.removeEventListener('blur', stop)
 })
 </script>
 
@@ -112,8 +93,8 @@ onBeforeUnmount(() => {
         </div>
 
         <PianoKeyboard
-          interactive show-labels :pressed="pressed"
-          @press="press" @release="release"
+          interactive show-labels :depressed-notes="activeNotes" :marks="keyMarks" :shortcuts="pianoKeyShortcuts"
+          @note-on="pressNote" @note-off="releaseNote"
         />
 
         <p class="mt-5 text-center text-xs/5 text-muted sm:mt-6">

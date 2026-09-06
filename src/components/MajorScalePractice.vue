@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { Accidental, MajorScaleFocus, MajorScaleQuestion, MajorScaleSettings } from '@/domain/majorScale'
+import type { PianoKeyMark } from '@/domain/piano'
 import type { MidiNote } from '@/domain/pitch'
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import ScalePianoKeyboard from '@/components/ScalePianoKeyboard.vue'
-import { usePianoAudio } from '@/composables/usePianoAudio'
+import { computed, nextTick, onMounted, ref } from 'vue'
+import PianoKeyboard from '@/components/PianoKeyboard.vue'
+import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
 import {
   accidentalOf,
   createMajorScaleGenerator,
@@ -15,6 +16,7 @@ import {
   naturalLetter,
   scaleMidiNotes,
 } from '@/domain/majorScale'
+import { midiNote } from '@/domain/pitch'
 
 const emit = defineEmits<{ exit: [] }>()
 const focusOptions: { value: MajorScaleFocus, label: string, description: string }[] = [
@@ -44,13 +46,13 @@ const selectedRepairIndex = ref<number>()
 const selectedAccidental = ref<Accidental>()
 const selectedMapping = ref<string>()
 const pianoIndex = ref(0)
-const pressedMidi = ref<MidiNote>()
 const wrongMidi = ref<MidiNote>()
+const keyboardFrom = midiNote(60)
+const keyboardTo = midiNote(83)
 const heading = ref<HTMLElement>()
 const nextButton = ref<HTMLButtonElement>()
-const { error: audioError, play, prepare, status: audioStatus, stop } = usePianoAudio()
+const { activeNotes, error: audioError, playNote, playSequence, prepare, status: audioStatus, stop } = useInstrumentPlayer('piano')
 let generate = createMajorScaleGenerator(active.value)
-const playbackTimers: ReturnType<typeof setTimeout>[] = []
 
 const answered = computed(() => correctCount.value + wrongCount.value)
 const accuracy = computed(() => answered.value ? `${Math.round(correctCount.value / answered.value * 100)}%` : '—')
@@ -65,16 +67,35 @@ const expectedMapping = computed(() => {
   }
   return current.direction === 'degree-to-note' ? current.scale.notes[current.degree - 1] : String(current.degree)
 })
-const scaleKeys = computed(() => {
+const scaleKeys = computed<PianoKeyMark[]>(() => {
   const current = question.value
   if (!current) {
     return []
   }
   return scaleMidiNotes(current.scale).map((midi, index) => ({
     midi,
+    state: 'member',
     label: index === 7 ? current.scale.notes[0] : current.scale.notes[index]!,
-    degree: index === 7 ? 1 : index + 1,
+    detail: String(index === 7 ? 1 : index + 1),
   }))
+})
+const keyboardMarks = computed<PianoKeyMark[]>(() => {
+  const marks: PianoKeyMark[] = [
+    ...(locked.value ? scaleKeys.value : []),
+    ...activeNotes.value.map(midi => ({ midi, state: 'active' as const })),
+  ]
+  const current = question.value
+  if (locked.value && !wasCorrect.value && current?.type === 'piano') {
+    marks.push({
+      midi: current.expectedMidi[pianoIndex.value]!,
+      state: 'correct',
+      label: current.scale.notes[pianoIndex.value] ?? current.scale.notes[0],
+    })
+  }
+  if (wrongMidi.value !== undefined) {
+    marks.push({ midi: wrongMidi.value, state: 'wrong' })
+  }
+  return marks
 })
 const feedback = computed(() => {
   const current = question.value
@@ -111,8 +132,6 @@ function focusHeading() {
 }
 
 function clearPlayback() {
-  playbackTimers.splice(0).forEach(clearTimeout)
-  pressedMidi.value = undefined
   stop()
 }
 
@@ -227,8 +246,7 @@ function choosePiano(midi: MidiNote) {
   if (current?.type !== 'piano' || locked.value) {
     return
   }
-  pressedMidi.value = midi
-  void play(midi)
+  void playNote(midi)
   if (midi !== current.expectedMidi[pianoIndex.value]) {
     wrongMidi.value = midi
     complete(false)
@@ -245,18 +263,10 @@ function playCorrectScale() {
   if (!current) {
     return
   }
-  clearPlayback()
-  scaleMidiNotes(current.scale).forEach((midi, index) => {
-    playbackTimers.push(setTimeout(() => {
-      pressedMidi.value = midi
-      void play(midi)
-    }, index * 450))
-  })
-  playbackTimers.push(setTimeout(() => pressedMidi.value = undefined, 8 * 450))
+  playSequence(scaleMidiNotes(current.scale), { intervalMilliseconds: 450 })
 }
 
 onMounted(() => void prepare())
-onBeforeUnmount(clearTransition)
 </script>
 
 <template>
@@ -436,7 +446,10 @@ onBeforeUnmount(clearTransition)
             已完成 {{ pianoIndex }} / 8
           </p>
           <div class="overflow-x-auto rounded-2xl border border-line bg-canvas p-3" tabindex="0" aria-label="可横向滚动的两八度钢琴">
-            <ScalePianoKeyboard :correct-midi="locked && !wasCorrect ? question.expectedMidi[pianoIndex] : undefined" :interactive="!locked" :pressed-midi="pressedMidi" :scale-notes="locked ? scaleKeys : undefined" :wrong-midi="wrongMidi" @choose="choosePiano" />
+            <PianoKeyboard
+              :from="keyboardFrom" :interactive="!locked" :marks="keyboardMarks"
+              :minimum-white-key-width="44" :to="keyboardTo" @select="choosePiano"
+            />
           </div>
         </div>
 

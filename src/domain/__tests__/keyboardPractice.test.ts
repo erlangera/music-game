@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { createHighlightPlayer, createKeyboardGenerator, isCorrectKey, namedPitch, pianoKeys, pitches } from '../keyboardPractice.ts'
+import { createPianoKeyboardKeys, resolvePianoKeyState } from '../piano.ts'
+import { midiNote } from '../pitch.ts'
 
 function seeded(seed: number) {
   return () => {
@@ -58,6 +60,30 @@ test('enharmonic spellings differ but all twelve physical pitches score by pitch
   }
   assert.deepEqual(pianoKeys.map(k => k.midi), Array.from({ length: 12 }, (_, i) => 60 + i))
   assert.equal(new Set(pianoKeys.map(k => k.shortcut)).size, 12)
+})
+
+test('piano keyboard geometry scales to one or more octaves', () => {
+  const oneOctave = createPianoKeyboardKeys(midiNote(60), midiNote(71))
+  const twoOctaves = createPianoKeyboardKeys(midiNote(60), midiNote(83))
+  assert.equal(oneOctave.length, 12)
+  assert.equal(oneOctave.filter(key => !key.black).length, 7)
+  assert.equal(twoOctaves.length, 24)
+  assert.equal(twoOctaves.filter(key => !key.black).length, 14)
+  assert.equal(oneOctave[0]!.left, 0)
+  assert.ok(Math.abs(oneOctave[0]!.width - 100 / 7) < Number.EPSILON * 10)
+  assert.ok(Math.abs(oneOctave[1]!.left - 100 / 7) < Number.EPSILON * 10)
+  assert.equal(oneOctave[1]!.position, 1)
+  assert.equal(twoOctaves.at(-1)!.position, 14)
+  assert.throws(() => createPianoKeyboardKeys(midiNote(71), midiNote(60)), RangeError)
+})
+
+test('piano key feedback has one shared semantic priority', () => {
+  const note = midiNote(61)
+  assert.equal(resolvePianoKeyState([]), undefined)
+  assert.equal(resolvePianoKeyState([{ midi: note, state: 'member' }]), 'member')
+  assert.equal(resolvePianoKeyState([{ midi: note, state: 'member' }, { midi: note, state: 'active' }]), 'active')
+  assert.equal(resolvePianoKeyState([{ midi: note, state: 'active' }, { midi: note, state: 'correct' }]), 'correct')
+  assert.equal(resolvePianoKeyState([{ midi: note, state: 'correct' }, { midi: note, state: 'wrong' }]), 'wrong')
 })
 
 test('single directions, constant random sources and invalid lengths', () => {

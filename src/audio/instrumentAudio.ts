@@ -24,3 +24,9 @@ export interface InstrumentAudioEngine {
   subscribe: (listener: (state: InstrumentAudioState) => void) => () => void
   dispose: () => void
 }
+
+export interface PlayableInstrument {
+  id: string
+  label: string
+  audio: InstrumentAudioEngine
+}

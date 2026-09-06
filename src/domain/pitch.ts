@@ -26,3 +26,7 @@ export function scientificPitch(midi: MidiNote): string {
   const octave = Math.floor(midi / 12) - 1
   return `${scientificPitchNames[pitchClass]}${octave}`
 }
+
+export function pitchClassOf(midi: MidiNote): PitchClass {
+  return (midi % 12) as PitchClass
+}

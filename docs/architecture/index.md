@@ -9,6 +9,8 @@ index.html
   -> /src/main.ts
        -> /src/assets/main.css
        -> /src/router/index.ts
+       -> /src/composables/instrumentInjection.ts
+            -> /src/audio/pianoInstrument.ts
        -> createApp(App)
             -> /src/App.vue (RouterView)
                  -> /src/views/HomeView.vue
@@ -24,7 +26,8 @@ index.html
                            -> /src/domain/keyboardPractice.ts
                            -> /src/domain/piano.ts
                            -> /src/domain/pitch.ts
-                           -> /src/composables/usePianoAudio.ts
+                           -> /src/components/PianoKeyboard.vue
+                           -> /src/composables/useInstrumentPlayer.ts
                                 -> /src/audio/instrumentAudio.ts
                                 -> /src/audio/tonePianoAudio.ts
                                      -> Tone.Sampler / Tone.PolySynth
@@ -33,12 +36,12 @@ index.html
                       -> /src/tools/catalog.ts
                       -> /src/components/PianoKeyboard.vue
                       -> /src/domain/piano.ts
-                      -> /src/composables/usePianoAudio.ts
+                      -> /src/composables/useInstrumentPlayer.ts
 ```
 
 ## Source Responsibilities
 
-钢琴训练使用独立 `KeyboardPracticeView.vue` → `KeyboardMemoryPractice.vue` → `PianoKeyboard.vue`，出题与判分位于 `keyboardPractice.ts`，琴键几何、音名和 MIDI 映射位于不含训练状态的 `piano.ts`。自由钢琴位于 `views/tools/`，只复用钢琴模型、琴键和声音，不依赖训练会话。`pitch.ts` 区分 pitch class、具体 MIDI note 和科学音高字符串；组件只把 MIDI note 交给 `usePianoAudio.ts`，后者订阅共享声音引擎状态，不直接依赖 Tone.js。`instrumentAudio.ts` 是平台无关的乐器契约，`tonePianoAudio.ts` 管理钢琴采样加载、用户手势解锁、主音量、复音释放和合成降级。两个训练模块保持独立会话，尚未抽象通用训练引擎或统一唱名/钢琴音频调度。
+钢琴训练、自然大调和自由钢琴都使用 `PianoKeyboard.vue`；组件根据 MIDI 起止音生成一或多个八度，通过 mark 输入统一 `member/active/correct/wrong` 状态，只发出 MIDI note 事件。琴键几何、音名、快捷键和状态优先级位于不含 Vue 的 `piano.ts`。`main.ts` 把钢琴注册到应用级乐器注册表，`useInstrumentPlayer.ts` 按 id 注入乐器并统一预加载、解锁、单音、持续按键、活动高亮和可取消序列。`instrumentAudio.ts` 是平台无关的声音契约，`tonePianoAudio.ts` 只管理钢琴采样、音量、释放和合成降级。训练模块仍各自持有题目、判分和会话状态，没有抽象通用计分引擎。
 
 | 路径 | 当前职责 | 备注 |
 | --- | --- | --- |
@@ -52,9 +55,10 @@ index.html
 | `src/components/SolfegeMemoryPractice.vue` | 唱名 S1–S4 核心设置、单项/序列交互、会话与汇总 | 状态仅在组件内存中，退出或刷新后不保留 |
 | `src/domain/solfegePractice.ts` | 唱名类型、平衡牌组、方向队列和题目映射 | 不依赖 Vue，可传入随机函数 |
 | `src/domain/pitch.ts` | pitch class、MIDI note 构造与科学音高转换 | 不依赖 Vue/Tone；MIDI 范围在构造边界校验 |
-| `src/domain/piano.ts` | 一个八度琴键几何、音名、快捷键与 MIDI 映射 | 同时供工具和训练使用，不含题目或判分 |
-| `src/audio/` | 通用乐器声音契约、钢琴采样清单和 Tone.js 适配器 | 共享实例跨路由复用已解码采样；页面卸载只停止，不销毁缓存 |
-| `src/composables/usePianoAudio.ts` | 把声音引擎状态与生命周期接入 Vue | 组件卸载取消订阅并停止当前声音 |
+| `src/domain/piano.ts` | 任意 MIDI 范围的琴键几何、音名、快捷键、mark 类型和状态优先级 | 同时供工具、键位训练和大调模块使用，不含题目或判分 |
+| `src/audio/` | 通用乐器契约与注册表、钢琴定义、采样清单和 Tone.js 适配器 | 共享实例跨路由复用已解码采样；页面卸载只停止，不销毁缓存 |
+| `src/composables/instrumentInjection.ts` | 把乐器注册表注入 Vue 应用并按稳定 id 解析乐器 | 新乐器通过注册定义接入，不要求练习导入具体声音实现 |
+| `src/composables/useInstrumentPlayer.ts` | 统一声音状态、生命周期、活动音符、持续按键和可取消序列 | 视觉组件只消费 active notes，不依赖 Tone.js |
 | `src/assets/main.css` | Tailwind 入口、设计 token、全局基线 | 当前实际被 `main.ts` 导入 |
 | `src/assets/base.css` | Vue starter 遗留样式 | 当前未被入口导入 |
 | `src/components/` | 可复用或可独立表达的交互组件 | 当前包含唱名记忆训练；目录中仍保留未引用的 Vue starter 示例 |
@@ -75,7 +79,7 @@ index.html
 - 新增真实页面时在路由表中声明并放入 `src/views/`；非测试工具使用 `/tools/<id>` 和 `src/views/tools/`，不要为尚未实现的导航项建立空页面。
 - 当学习进度需要跨页面共享时，再建立明确的状态与持久化边界。
 - 把乐理规则、题目生成与评分建模为不依赖 Vue 的领域模块，方便确定性测试。
-- 后续音高序列应在通用乐器契约之上增加可取消的时间线能力并由 Tone AudioContext 时间调度；在真正接入听辨模块前不创建空的通用调度层。
+- 当前通用控制器已提供基于浏览器时钟的可取消播放序列；需要节奏精度的听辨或演奏模块再将调度下沉到 Tone AudioContext，不提前增加空的节拍系统。
 - Web MIDI 只负责把输入规范化为现有 `MidiNote` 和 0–1 velocity，不让设备 API 或 Tone 类型渗入题目和判分。
 
 任何引入新边界的实现都应先记录理由，并更新本页和 `ARCHITECTURE.md`。

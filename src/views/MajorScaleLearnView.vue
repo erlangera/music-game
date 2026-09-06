@@ -1,42 +1,39 @@
 <script setup lang="ts">
-import type { MidiNote } from '@/domain/pitch'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import type { PianoKeyMark } from '@/domain/piano'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import ScalePianoKeyboard from '@/components/ScalePianoKeyboard.vue'
-import { usePianoAudio } from '@/composables/usePianoAudio'
+import PianoKeyboard from '@/components/PianoKeyboard.vue'
+import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
 import { majorScaleIds, majorScales, majorScaleSteps, scaleMidiNotes } from '@/domain/majorScale'
+import { midiNote } from '@/domain/pitch'
 
 const router = useRouter()
 const lessonIndex = ref(0)
-const activeMidi = ref<MidiNote>()
+const keyboardFrom = midiNote(60)
+const keyboardTo = midiNote(83)
 const lessonScales = majorScaleIds.map(id => majorScales[id])
 const lessonLabels = ['原理', ...majorScaleIds]
 const totalLessons = lessonLabels.length
 const scale = computed(() => lessonIndex.value === 0 ? majorScales.C : lessonScales[lessonIndex.value - 1]!)
 const scaleMidi = computed(() => scaleMidiNotes(scale.value))
-const scaleKeys = computed(() => scaleMidi.value.map((midi, index) => ({
+const scaleKeys = computed<PianoKeyMark[]>(() => scaleMidi.value.map((midi, index) => ({
   midi,
+  state: 'member',
   label: index === 7 ? scale.value.notes[0] : scale.value.notes[index]!,
-  degree: index === 7 ? 1 : index + 1,
+  detail: String(index === 7 ? 1 : index + 1),
 })))
-const { error: audioError, play, prepare, status: audioStatus, stop } = usePianoAudio()
-const timers: ReturnType<typeof setTimeout>[] = []
+const { activeNotes, error: audioError, playSequence, prepare, status: audioStatus, stop } = useInstrumentPlayer('piano')
+const keyboardMarks = computed<PianoKeyMark[]>(() => [
+  ...scaleKeys.value,
+  ...activeNotes.value.map(midi => ({ midi, state: 'active' as const })),
+])
 
 function clearPlayback() {
-  timers.splice(0).forEach(clearTimeout)
-  activeMidi.value = undefined
   stop()
 }
 
 function playScale() {
-  clearPlayback()
-  scaleMidi.value.forEach((midi, index) => {
-    timers.push(setTimeout(() => {
-      activeMidi.value = midi
-      void play(midi)
-    }, index * 480))
-  })
-  timers.push(setTimeout(() => activeMidi.value = undefined, scaleMidi.value.length * 480))
+  playSequence(scaleMidi.value, { intervalMilliseconds: 480 })
 }
 
 function setLesson(index: number) {
@@ -51,7 +48,6 @@ function leave() {
 }
 
 onMounted(() => void prepare())
-onBeforeUnmount(clearPlayback)
 </script>
 
 <template>
@@ -147,7 +143,7 @@ onBeforeUnmount(clearPlayback)
             </button>
           </div>
           <div class="overflow-x-auto rounded-2xl border border-line bg-canvas p-3" tabindex="0" aria-label="可横向滚动的两八度钢琴">
-            <ScalePianoKeyboard :active-midi="activeMidi" :scale-notes="scaleKeys" show-labels />
+            <PianoKeyboard :from="keyboardFrom" :marks="keyboardMarks" :minimum-white-key-width="44" :to="keyboardTo" show-labels />
           </div>
         </section>
       </article>
@@ -197,7 +193,7 @@ onBeforeUnmount(clearPlayback)
             </button>
           </div>
           <div class="overflow-x-auto rounded-2xl border border-line bg-canvas p-3" tabindex="0" aria-label="可横向滚动的两八度钢琴">
-            <ScalePianoKeyboard :active-midi="activeMidi" :scale-notes="scaleKeys" show-labels />
+            <PianoKeyboard :from="keyboardFrom" :marks="keyboardMarks" :minimum-white-key-width="44" :to="keyboardTo" show-labels />
           </div>
         </section>
       </article>

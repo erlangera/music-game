@@ -8,6 +8,8 @@
 Browser
   -> index.html
   -> src/main.ts
+       -> src/composables/instrumentInjection.ts
+            -> src/audio/pianoInstrument.ts
        -> src/router/index.ts (hash history)
        -> src/App.vue (RouterView)
             -> src/views/HomeView.vue
@@ -17,20 +19,20 @@ Browser
                       -> src/domain/keyboardPractice.ts
                       -> src/domain/piano.ts
                       -> src/domain/pitch.ts
-                      -> src/composables/usePianoAudio.ts
-                           -> src/audio/instrumentAudio.ts (platform-neutral contract)
+                      -> src/composables/useInstrumentPlayer.ts
+                           -> injected src/audio/instrumentAudio.ts contract
                            -> src/audio/tonePianoAudio.ts
                                 -> Tone.Sampler + self-hosted Salamander samples
                            -> Tone.PolySynth fallback
             -> src/views/MajorScaleLearnView.vue
-                 -> src/components/ScalePianoKeyboard.vue
+                 -> src/components/PianoKeyboard.vue (C4–B5 range)
                  -> src/domain/majorScale.ts
-                 -> src/composables/usePianoAudio.ts
+                 -> src/composables/useInstrumentPlayer.ts
             -> src/views/MajorScalePracticeView.vue
                  -> src/components/MajorScalePractice.vue
-                 -> src/components/ScalePianoKeyboard.vue
+                 -> src/components/PianoKeyboard.vue (C4–B5 range)
                  -> src/domain/majorScale.ts
-                 -> src/composables/usePianoAudio.ts
+                 -> src/composables/useInstrumentPlayer.ts
             -> src/views/SolfegePracticeView.vue
                  -> src/components/SolfegeMemoryPractice.vue
                       -> local setup, session and scoring state
@@ -39,7 +41,7 @@ Browser
                  -> src/tools/catalog.ts (tool discovery metadata)
                  -> src/components/PianoKeyboard.vue
                  -> src/domain/piano.ts
-                 -> src/composables/usePianoAudio.ts (shared engine/cache)
+                 -> src/composables/useInstrumentPlayer.ts (shared injected engine/cache)
        -> Tailwind utilities + src/assets/main.css tokens
 ```
 
@@ -53,7 +55,7 @@ Browser
 - 构建：Vite，生产资源输出到 `dist/`。
 - 发布：GitHub Actions -> GitHub Pages，公共路径为 `/music-game/`。
 - 数据：唱名和钢琴领域数据、生成和判分位于 `src/domain/`，`pitchClass` 与具体 `midiNote` 分开建模；设置、会话和汇总仅在内存，逐项记录、本地存储、错题复盘和 MIDI 输入尚未实现。
-- 音频：唱名继续由 HTML Audio composable 管理；可演奏乐器共享平台无关的 `InstrumentAudioEngine` 契约，各乐器提供具体 adapter 和 composable。当前钢琴使用共享 Tone.js 适配器、自托管 Salamander 稀疏采样和 PolySynth 降级，支持定长音符及复音按下/松开。
+- 音频：唱名继续由 HTML Audio composable 管理；可演奏乐器注册到应用级 `InstrumentRegistry`，共享平台无关的 `InstrumentAudioEngine` 契约和 `useInstrumentPlayer` 交互控制器。当前钢琴使用共享 Tone.js 适配器、自托管 Salamander 稀疏采样和 PolySynth 降级，支持定长音符、复音按下/松开、活动高亮及可取消序列。
 - 工具：`/tools/:tool` 与训练路由分离，工具不出题、不判分、不写入训练记录；`src/tools/catalog.ts` 是导航发现信息，页面仍按路由懒加载。
 
 ## Current Constraints
@@ -62,7 +64,7 @@ Browser
 - 唱名 S1–S4 的核心文字交互已拆为独立组件，并把题型与受控生成提取到纯 TypeScript 领域模块；逐项答题记录、随机题复现和错题回顾尚未实现，其他训练模块也尚无共享训练引擎。
 - 仓库中保留 Vue starter components，但当前入口没有引用它们。
 - 钢琴领域有 Node 原生确定性单元测试，覆盖生成/判分/展示控制器、MIDI note 转换和采样音域覆盖；`npm run check` 覆盖 lint、类型检查、生产构建和 `npm test`，尚无浏览器 E2E。
-- 自然大调领域以 pitch class 计算、按调性保存拼写，并用具体 MIDI note 表示低八度起始的八音序列；课程和训练共享钢琴音频，但使用独立的 C4–B5 两八度展示组件。
+- 自然大调领域以 pitch class 计算、按调性保存拼写，并用具体 MIDI note 表示低八度起始的八音序列；课程、训练和自由钢琴共享同一个可配置 MIDI 范围的 `PianoKeyboard.vue`、统一高亮状态和注入的钢琴声音。
 - 当前实现覆盖首页、模块一核心交互和模块二双向键位训练（含序列），不能据此推断完整训练引擎、记录或解锁闭环已存在。
 
 ## Detailed Knowledge
