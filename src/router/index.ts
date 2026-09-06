@@ -58,6 +58,12 @@ const router = createRouter({
       meta: { title: '主音感训练 · 音阶阶' },
     },
     {
+      path: '/ear/practice/degree',
+      name: 'relative-pitch-degree',
+      component: () => import('@/views/RelativePitchDegreePracticeView.vue'),
+      meta: { title: '核心音级听辨 · 音阶阶' },
+    },
+    {
       path: '/tools/piano',
       name: 'tool-piano',
       component: () => import('@/views/tools/PianoToolView.vue'),

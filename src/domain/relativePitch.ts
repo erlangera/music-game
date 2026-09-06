@@ -8,6 +8,8 @@ export type RelativePitchCategory = typeof relativePitchCategories[number]
 export type RelativePitchMode = 'fixed' | 'infinite'
 export type TonalHint = 'scale' | 'triad' | 'cadence' | 'tonic'
 export type TonicExercise = 'choice' | 'piano'
+export const coreScaleDegrees = [1, 3, 5] as const
+export type CoreScaleDegree = typeof coreScaleDegrees[number]
 
 export interface RelativePitchAudioStep {
   notes: readonly MidiNote[]
@@ -23,6 +25,13 @@ export interface TonicQuestion {
   distractorDegree: number
   candidateMidi: readonly [MidiNote, MidiNote]
   correctCandidateIndex: 0 | 1
+}
+
+export interface DegreeQuestion {
+  id: string
+  scale: MajorScaleDefinition
+  targetDegree: CoreScaleDegree
+  targetMidi: MidiNote
 }
 
 export const tonalHintLabels: Record<TonalHint, string> = {
@@ -124,12 +133,30 @@ export function tonicResolutionSteps(question: TonicQuestion): RelativePitchAudi
   ]
 }
 
+export function degreeQuestionSteps(question: DegreeQuestion, hint: TonalHint): RelativePitchAudioStep[] {
+  return [
+    ...tonalContextSteps(question.scale, hint),
+    single(question.targetMidi, 0, 700),
+  ]
+}
+
+export function degreeResolutionSteps(question: DegreeQuestion): RelativePitchAudioStep[] {
+  return [
+    single(question.scale.lowTonicMidi, 120, 600),
+    single(question.targetMidi, 0, 800),
+  ]
+}
+
 export function isTonicChoiceAnswer(question: TonicQuestion, candidateIndex: number) {
   return question.type === 'choice' && candidateIndex === question.correctCandidateIndex
 }
 
 export function isTonicPianoAnswer(question: TonicQuestion, answer: MidiNote) {
   return question.type === 'piano' && answer === question.tonicMidi
+}
+
+export function isDegreeAnswer(question: DegreeQuestion, answer: number) {
+  return answer === question.targetDegree
 }
 
 export function createTonicQuestionGenerator(random = Math.random): () => TonicQuestion {
@@ -174,6 +201,29 @@ export function createTonicQuestionGenerator(random = Math.random): () => TonicQ
       distractorDegree,
       candidateMidi: tonicFirst ? [tonicMidi, distractorMidi] : [distractorMidi, tonicMidi],
       correctCandidateIndex: tonicFirst ? 0 : 1,
+    }
+  }
+}
+
+export function createDegreeQuestionGenerator(random = Math.random): () => DegreeQuestion {
+  let serial = 0
+  let scaleQueue: MajorScaleId[] = []
+  let degreeQueue: CoreScaleDegree[] = []
+
+  return () => {
+    if (!scaleQueue.length) {
+      scaleQueue = shuffle(majorScaleIds, random)
+    }
+    if (!degreeQueue.length) {
+      degreeQueue = shuffle(coreScaleDegrees, random)
+    }
+    const scale = majorScales[scaleQueue.shift()!]
+    const targetDegree = degreeQueue.shift()!
+    return {
+      id: `degree-${++serial}`,
+      scale,
+      targetDegree,
+      targetMidi: scaleDegreeMidi(scale, targetDegree),
     }
   }
 }

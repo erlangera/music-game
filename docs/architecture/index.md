@@ -41,6 +41,9 @@ index.html
                       -> /src/domain/relativePitch.ts
                       -> /src/components/PianoKeyboard.vue
                       -> /src/composables/useInstrumentPlayer.ts
+                 -> /src/views/RelativePitchDegreePracticeView.vue
+                      -> /src/domain/relativePitch.ts
+                      -> /src/composables/useInstrumentPlayer.ts
                  -> /src/views/tools/PianoToolView.vue
                       -> /src/tools/catalog.ts
                       -> /src/components/PianoKeyboard.vue
@@ -61,8 +64,8 @@ index.html
 | `src/views/tools/PianoToolView.vue` | 不出题、不计分的自由钢琴交互 | 工具路由 `/tools/piano` |
 | `src/tools/catalog.ts` | 已上线工具的发现元数据 | 可供未来工具中心和导航复用，不承载运行状态 |
 | `src/views/SolfegePracticeView.vue` | 唱名训练页编排和返回首页导航 | 训练路由 `/solfege` |
-| `src/views/RelativePitch*View.vue` | 相对音高入口、学习、四类练习目录和十二调主音感训练 | 当前不评分、不保存错题，仅主音感可练 |
-| `src/domain/relativePitch.ts` | 十二调主音题目、四种调性提示、音频步骤、判定和精选短音型清单 | 不依赖 Vue/Tone；固定主音音域 C4–B4 |
+| `src/views/RelativePitch*View.vue` | 相对音高入口、学习、四类练习目录、十二调主音感与 `1/3/5` 音级听辨 | 当前不评分、不保存错题；音级关系与旋律听写仍是占位 |
+| `src/domain/relativePitch.ts` | 十二调主音与核心音级题目、四种调性提示、音频步骤、判定和精选短音型清单 | 不依赖 Vue/Tone；主音作答范围 C4–B4，音级使用各调低八度音阶音 |
 | `src/components/SolfegeMemoryPractice.vue` | 唱名 S1–S4 核心设置、单项/序列交互、会话与汇总 | 状态仅在组件内存中，退出或刷新后不保留 |
 | `src/domain/solfegePractice.ts` | 唱名类型、平衡牌组、方向队列和题目映射 | 不依赖 Vue，可传入随机函数 |
 | `src/domain/pitch.ts` | pitch class、MIDI note 构造与科学音高转换 | 不依赖 Vue/Tone；MIDI 范围在构造边界校验 |

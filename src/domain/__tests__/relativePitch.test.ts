@@ -2,8 +2,13 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { majorScaleIds, majorScales, scaleMidiNotes } from '../majorScale.ts'
 import {
+  coreScaleDegrees,
+  createDegreeQuestionGenerator,
   createTonicQuestionGenerator,
   curatedRelativePitchMotifs,
+  degreeQuestionSteps,
+  degreeResolutionSteps,
+  isDegreeAnswer,
   isTonicChoiceAnswer,
   isTonicPianoAnswer,
   relativePitchLearningKeyboardFrom,
@@ -36,6 +41,24 @@ test('tonic exercises and distractors use balanced shuffle bags', () => {
     assert.equal(question.candidateMidi.filter(note => note === question.tonicMidi).length, 1)
     assert.notEqual(question.candidateMidi[0], question.candidateMidi[1])
   }
+})
+
+test('degree generator balances all twelve keys and the core 1, 3, 5 degrees', () => {
+  const next = createDegreeQuestionGenerator(seeded(29))
+  const questions = Array.from({ length: 12 }, next)
+  assert.deepEqual([...new Set(questions.map(question => question.scale.id))].sort(), [...majorScaleIds].sort())
+  for (let index = 0; index < questions.length; index += 3) {
+    assert.deepEqual(new Set(questions.slice(index, index + 3).map(question => question.targetDegree)), new Set(coreScaleDegrees))
+  }
+  assert.ok(questions.every(question => question.targetMidi === scaleMidiNotes(question.scale)[question.targetDegree - 1]))
+})
+
+test('degree questions score strictly and resolve from tonic to target', () => {
+  const question = createDegreeQuestionGenerator(seeded(31))()
+  assert.ok(isDegreeAnswer(question, question.targetDegree))
+  assert.ok(!isDegreeAnswer(question, question.targetDegree === 1 ? 3 : 1))
+  assert.equal(degreeQuestionSteps(question, 'scale').at(-1)!.notes[0], question.targetMidi)
+  assert.deepEqual(degreeResolutionSteps(question).map(step => step.notes[0]), [question.scale.lowTonicMidi, question.targetMidi])
 })
 
 test('choice and piano answers only accept the generated tonic target', () => {

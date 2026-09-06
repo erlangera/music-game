@@ -13,6 +13,14 @@ const categoryIcons: Record<RelativePitchCategory, string> = {
   relationship: '↗',
   dictation: '♫',
 }
+
+function isAvailable(category: RelativePitchCategory) {
+  return category === 'tonic' || category === 'degree'
+}
+
+function practiceRoute(category: RelativePitchCategory) {
+  return category === 'degree' ? 'relative-pitch-degree' : 'relative-pitch-tonic'
+}
 </script>
 
 <template>
@@ -44,28 +52,28 @@ const categoryIcons: Record<RelativePitchCategory, string> = {
             选择练习内容
           </h1>
           <p class="mx-auto mt-4 max-w-2xl text-sm/7 text-muted">
-            从找到主音开始，逐步进入功能音级、音级关系和旋律听写。当前首个可用训练是主音感。
+            主音感与核心音级听辨现已开放；先找到“1”，再辨认“1、3、5”。
           </p>
         </div>
 
         <div class="mt-8 grid gap-4 sm:grid-cols-2">
-          <article v-for="category in relativePitchCategories" :key="category" class="rounded-2xl border-2 p-5" :class="category === 'tonic' ? 'border-brand bg-brand-soft' : 'border-line bg-canvas/60'">
+          <article v-for="category in relativePitchCategories" :key="category" class="rounded-2xl border-2 p-5" :class="isAvailable(category) ? 'border-brand bg-brand-soft' : 'border-line bg-canvas/60'">
             <div class="flex items-start gap-4">
-              <span class="grid size-12 shrink-0 place-items-center rounded-2xl text-xl font-black" :class="category === 'tonic' ? 'bg-brand text-white' : 'bg-white text-muted'" aria-hidden="true">{{ categoryIcons[category] }}</span>
+              <span class="grid size-12 shrink-0 place-items-center rounded-2xl text-xl font-black" :class="isAvailable(category) ? 'bg-brand text-white' : 'bg-white text-muted'" aria-hidden="true">{{ categoryIcons[category] }}</span>
               <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-2">
                   <h2 class="text-lg font-extrabold">
                     {{ relativePitchCategoryCopy[category].title }}
                   </h2>
-                  <span class="rounded-full px-2.5 py-1 text-[10px] font-extrabold" :class="category === 'tonic' ? 'bg-white text-brand-dark' : 'bg-line text-muted'">{{ category === 'tonic' ? '当前可用' : '后续开放' }}</span>
+                  <span class="rounded-full px-2.5 py-1 text-[10px] font-extrabold" :class="isAvailable(category) ? 'bg-white text-brand-dark' : 'bg-line text-muted'">{{ isAvailable(category) ? '当前可用' : '后续开放' }}</span>
                 </div>
                 <p class="mt-2 text-sm/6 text-muted">
                   {{ relativePitchCategoryCopy[category].description }}
                 </p>
               </div>
             </div>
-            <RouterLink v-if="category === 'tonic'" :to="{ name: 'relative-pitch-tonic', query: { mode } }" class="mt-5 grid min-h-12 place-items-center rounded-xl bg-brand text-sm font-extrabold text-white hover:bg-brand-dark">
-              开始找主音 →
+            <RouterLink v-if="isAvailable(category)" :to="{ name: practiceRoute(category), query: { mode } }" class="mt-5 grid min-h-12 place-items-center rounded-xl bg-brand text-sm font-extrabold text-white hover:bg-brand-dark">
+              {{ category === 'tonic' ? '开始找主音 →' : '开始辨音级 →' }}
             </RouterLink>
             <button v-else type="button" class="mt-5 min-h-12 w-full cursor-not-allowed rounded-xl border border-line bg-white text-sm font-extrabold text-muted" disabled>
               尚未开放
