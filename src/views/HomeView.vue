@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { pianoTool } from '@/tools/catalog'
 
 interface Stage {
   step: string
@@ -15,7 +16,23 @@ interface Stage {
 const notice = ref('')
 const router = useRouter()
 
-const navItems = ['学习路径', '专项训练', '学习记录', '设置']
+const navItems = [
+  { id: 'path', label: '学习路径' },
+  { id: 'practice', label: '专项训练' },
+  { id: 'tools', label: '音乐工具' },
+  { id: 'records', label: '学习记录' },
+  { id: 'settings', label: '设置' },
+] as const
+
+function handleNavigation(item: typeof navItems[number]) {
+  if (item.id === 'tools') {
+    void router.push({ name: pianoTool.routeName })
+    return
+  }
+  if (item.id !== 'path') {
+    showNotice(`${item.label}模块将在后续版本开放`)
+  }
+}
 
 const stages: Stage[] = [
   {
@@ -125,18 +142,19 @@ function handleStageAction(stage: Stage) {
       <nav class="mt-11 space-y-2" aria-label="主导航">
         <button
           v-for="(item, index) in navItems"
-          :key="item"
+          :key="item.id"
           type="button"
           class="flex min-h-12 w-full items-center gap-3 rounded-2xl px-4 text-left text-[14px] font-bold transition-colors"
           :class="index === 0 ? 'bg-brand-soft text-brand-dark' : 'text-muted hover:bg-canvas hover:text-ink'"
           :aria-current="index === 0 ? 'page' : undefined"
-          @click="index > 0 && showNotice(`${item}模块将在后续版本开放`)"
+          @click="handleNavigation(item)"
         >
           <svg v-if="index === 0" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M4 5.5h6.5v13H4zM13.5 5.5H20v13h-6.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /><path d="M7.2 9h.1M16.7 9h.1" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" /></svg>
           <svg v-else-if="index === 1" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M5 4v16M5 8h5v12M10 5h5v15M15 10h4v10" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /></svg>
-          <svg v-else-if="index === 2" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+          <svg v-else-if="item.id === 'tools'" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M3 7h18v11H3zM6 7v7m4-7v7m4-7v7m4-7v7M5 14V7h2v7m2 0V7h2v7m2 0V7h2v7m2 0V7h2v7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" /></svg>
+          <svg v-else-if="item.id === 'records'" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
           <svg v-else viewBox="0 0 24 24" class="size-5" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M12 3v2m0 14v2m9-9h-2M5 12H3m15.4-6.4L17 7m-10 10-1.4 1.4m12.8 0L17 17M7 7 5.6 5.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
-          {{ item }}
+          {{ item.label }}
         </button>
       </nav>
 
@@ -362,13 +380,14 @@ function handleStageAction(stage: Stage) {
         </div>
       </main>
 
-      <nav class="safe-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-line bg-white/95 px-2 pt-2 backdrop-blur-lg lg:hidden" aria-label="移动端导航">
-        <button v-for="(item, index) in navItems" :key="item" type="button" class="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-extrabold" :class="index === 0 ? 'text-brand' : 'text-muted'" :aria-current="index === 0 ? 'page' : undefined" @click="index > 0 && showNotice(`${item}模块将在后续版本开放`)">
+      <nav class="safe-bottom fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-line bg-white/95 px-1 pt-2 backdrop-blur-lg lg:hidden" aria-label="移动端导航">
+        <button v-for="(item, index) in navItems" :key="item.id" type="button" class="flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-[10px] font-extrabold" :class="index === 0 ? 'text-brand' : 'text-muted'" :aria-current="index === 0 ? 'page' : undefined" @click="handleNavigation(item)">
           <svg v-if="index === 0" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M4 5.5h6.5v13H4zM13.5 5.5H20v13h-6.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /></svg>
           <svg v-else-if="index === 1" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M5 4v16M5 8h5v12M10 5h5v15M15 10h4v10" fill="none" stroke="currentColor" stroke-width="1.8" /></svg>
-          <svg v-else-if="index === 2" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+          <svg v-else-if="item.id === 'tools'" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M3 7h18v11H3zM6 7v7m4-7v7m4-7v7m4-7v7" fill="none" stroke="currentColor" stroke-width="1.7" /></svg>
+          <svg v-else-if="item.id === 'records'" viewBox="0 0 24 24" class="size-5" aria-hidden="true"><path d="M5 19V9m7 10V5m7 14v-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
           <svg v-else viewBox="0 0 24 24" class="size-5" aria-hidden="true"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M12 3v2m0 14v2m9-9h-2M5 12H3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
-          {{ item }}
+          {{ item.label }}
         </button>
       </nav>
 

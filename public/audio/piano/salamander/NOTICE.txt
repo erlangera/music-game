@@ -1,0 +1,6 @@
+Salamander Grand Piano by Alexander Holm
+Licensed under CC BY 3.0: https://creativecommons.org/licenses/by/3.0/
+Original project: https://github.com/sfzinstruments/SalamanderGrandPiano
+Browser samples: https://github.com/Tonejs/audio/tree/master/salamander
+Source revision: 869b6f8d9cddb47d966238c012041480b1ce517a
+Local changes: none; selected MP3 files copied unchanged.

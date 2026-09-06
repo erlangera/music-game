@@ -22,6 +22,12 @@ const router = createRouter({
       meta: { title: '钢琴键位训练 · 音阶阶' },
     },
     {
+      path: '/tools/piano',
+      name: 'tool-piano',
+      component: () => import('@/views/tools/PianoToolView.vue'),
+      meta: { title: '自由钢琴 · 音阶阶音乐工具' },
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },

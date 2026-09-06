@@ -18,6 +18,7 @@
     "check": "run-p lint build test"
   },
   "dependencies": {
+    "tone": "^15.1.22",
     "vue": "^3.5.40",
     "vue-router": "^5.3.1"
   },

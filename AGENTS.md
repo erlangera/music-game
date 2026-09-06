@@ -6,7 +6,7 @@
 
 - 产品：面向中文简谱初学者的音高与乐理训练 Web 应用，工作名“音阶阶”。
 - 当前阶段：首页/学习路径原型、模块一 S1–S4 核心交互和钢琴十二音双向单音/序列；已支持单项/序列、固定 10 题/无限练习，但完整记录、复盘和解锁闭环仍以 PRD 为规划目标。
-- 技术栈：Vue 3、Vue Router、TypeScript、Vite、Tailwind CSS 4。
+- 技术栈：Vue 3、Vue Router、TypeScript、Vite、Tailwind CSS 4、Tone.js。
 - 包管理：npm，锁文件为 `package-lock.json`。
 - 部署：GitHub Actions 构建并发布到 GitHub Pages，站点 base path 为 `/music-game/`。
 
@@ -33,10 +33,11 @@ npm run preview
 - `src/components/SolfegeMemoryPractice.vue`：模块一训练设置、双向单项/序列交互、即时反馈和本轮汇总。
 - `src/domain/solfegePractice.ts`：模块一领域类型、平衡出题、方向队列和唱名/简谱映射。
 - `src/components/KeyboardMemoryPractice.vue`、`PianoKeyboard.vue`：钢琴训练会话、反馈和虚拟琴键。
-- `src/domain/keyboardPractice.ts`、`src/domain/__tests__/`：钢琴生成、判分与确定性测试。
-- `src/composables/usePianoAudio.ts`：基础 Web Audio 单音合成和清理。
+- `src/domain/pitch.ts`、`src/domain/piano.ts`、`src/domain/keyboardPractice.ts`、`src/domain/__tests__/`：音高/MIDI 类型、通用钢琴模型、训练生成、判分与确定性测试。
+- `src/views/tools/`、`src/tools/catalog.ts`：不计分的音乐工具页和可扩展工具目录；当前包含自由钢琴。
+- `src/audio/`、`src/composables/usePianoAudio.ts`：通用乐器声音契约、Tone.js 钢琴采样/合成降级实现和 Vue 状态包装。
 - `src/assets/main.css`：Tailwind 入口、设计 token 和全局基础样式。
-- `public/`：不经打包处理的静态资源。
+- `public/`：不经打包处理的唱名与自托管 Salamander 钢琴采样等静态资源。
 - `docs/`：项目长期知识；入口见 `docs/index.md`。
 - `.github/skills/`：随仓库版本控制的可复用 Agent 工作流，不存放项目事实。
 - `.github/workflows/deploy-pages.yml`：GitHub Pages 构建与发布流程。

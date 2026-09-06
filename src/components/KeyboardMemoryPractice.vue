@@ -29,7 +29,7 @@ const wrongCount = ref(0)
 const questionNumber = ref(0)
 const heading = ref<HTMLElement>()
 const nextButton = ref<HTMLButtonElement>()
-const { play, stop, error: audioError } = usePianoAudio()
+const { play, prepare: prepareAudio, unlock: unlockAudio, stop, status: audioStatus, error: audioError } = usePianoAudio()
 let generate = createKeyboardGenerator(active.value)
 let advanceTimer: ReturnType<typeof setTimeout> | undefined
 const heldKeys = new Set<string>()
@@ -43,6 +43,25 @@ const isSequence = computed(() => (question.value?.sequence.length ?? 1) > 1)
 const nameToKey = computed(() => question.value?.direction === 'name-to-key')
 const directionLabel = computed(() => directions.find(item => item.value === question.value?.direction)?.label)
 const lastQuestion = computed(() => active.value.mode === 'fixed' && questionNumber.value === 10)
+const setupAudioMessage = computed(() => {
+  switch (audioStatus.value) {
+    case 'ready': return '钢琴音色已就绪。'
+    case 'fallback': return '钢琴采样未加载成功，本次将使用基础音色。'
+    case 'unavailable': return '声音暂不可用，仍可进行视觉训练。'
+    default: return '正在准备钢琴音色；未完成时会自动使用基础音色。'
+  }
+})
+const playingAudioMessage = computed(() => {
+  if (audioError.value) {
+    return audioError.value
+  }
+  switch (audioStatus.value) {
+    case 'loading': return '钢琴音色正在加载，暂用基础音色。'
+    case 'fallback': return '钢琴采样暂不可用，已切换为基础音色。'
+    case 'unavailable': return '声音暂不可用，你仍可继续答题。'
+    default: return ''
+  }
+})
 
 function clearTransition() {
   player.stop()
@@ -88,6 +107,7 @@ function begin(usePrevious = false) {
   wrongCount.value = 0
   questionNumber.value = 0
   audioError.value = ''
+  void unlockAudio()
   phase.value = 'playing'
   advance()
 }
@@ -122,7 +142,7 @@ function choose(note: NamedPitch) {
   }
   selected.value = note
   if (nameToKey.value) {
-    void play(60 + note.pitch)
+    void play(pianoKeys[note.pitch]!.midi)
   }
   if (isCorrectKey(currentItem.value, note)) {
     answerIndex.value++
@@ -179,6 +199,7 @@ function onBlur() {
 }
 
 onMounted(() => {
+  void prepareAudio()
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('keyup', onKeyUp)
   window.addEventListener('blur', onBlur)
@@ -274,6 +295,12 @@ onBeforeUnmount(() => {
           <button type="submit" class="min-h-14 w-full rounded-xl bg-brand text-base font-extrabold text-white hover:bg-brand-dark">
             开始训练 →
           </button>
+          <p class="text-center text-xs/5 text-muted" role="status">
+            {{ setupAudioMessage }}
+          </p>
+          <p class="text-center text-[10px]/4 text-muted">
+            钢琴采样：<a class="underline hover:text-ink" href="https://github.com/sfzinstruments/SalamanderGrandPiano" target="_blank" rel="noreferrer">Salamander Grand Piano</a> · Alexander Holm · <a class="underline hover:text-ink" href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>
+          </p>
         </form>
       </section>
 
@@ -333,8 +360,8 @@ onBeforeUnmount(() => {
             </button>
           </div>
         </div>
-        <p v-if="audioError" class="mt-3 text-xs/5 text-muted" role="status">
-          {{ audioError }}
+        <p v-if="playingAudioMessage" class="mt-3 text-xs/5 text-muted" role="status">
+          {{ playingAudioMessage }}
         </p>
       </section>
 

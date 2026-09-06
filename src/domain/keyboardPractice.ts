@@ -1,7 +1,9 @@
+import type { NamedPitch, Pitch } from './piano.ts'
+import { namedPitch, pitches } from './piano.ts'
 import { shuffle } from './solfegePractice.ts'
 
-export const pitches = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] as const
-export type Pitch = typeof pitches[number]
+export type { NamedPitch, Pitch } from './piano.ts'
+export { namedPitch, pianoKeys, pitches, pitchNames } from './piano.ts'
 export type KeyboardDirection = 'name-to-key' | 'key-to-name'
 export type KeyboardDirectionSetting = KeyboardDirection | 'mixed'
 export interface KeyboardSettings {
@@ -9,39 +11,10 @@ export interface KeyboardSettings {
   mode: 'fixed' | 'infinite'
   sequenceLength: number
 }
-export interface NamedPitch {
-  pitch: Pitch
-  label: string
-}
 export interface KeyboardQuestion {
   sequence: NamedPitch[]
   direction: KeyboardDirection
   options: NamedPitch[]
-}
-export const pitchNames: readonly (readonly string[])[] = [
-  ['C'],
-  ['C♯', 'D♭'],
-  ['D'],
-  ['D♯', 'E♭'],
-  ['E'],
-  ['F'],
-  ['F♯', 'G♭'],
-  ['G'],
-  ['G♯', 'A♭'],
-  ['A'],
-  ['A♯', 'B♭'],
-  ['B'],
-]
-export const pianoKeys = pitches.map(pitch => ({
-  pitch,
-  midi: 60 + pitch,
-  shortcut: ['a', 'w', 's', 'e', 'd', 'f', 't', 'g', 'y', 'h', 'u', 'j'][pitch]!,
-  black: [1, 3, 6, 8, 10].includes(pitch),
-  left: [0, 1, 1, 2, 2, 3, 4, 4, 5, 5, 6, 6][pitch]! / 7 * 100,
-}))
-export function namedPitch(pitch: Pitch, random = Math.random): NamedPitch {
-  const names = pitchNames[pitch]!
-  return { pitch, label: names[Math.floor(random() * names.length)]! }
 }
 export function isCorrectKey(expected: NamedPitch, selected: NamedPitch): boolean {
   return expected.pitch === selected.pitch
