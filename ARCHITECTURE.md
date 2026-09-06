@@ -33,6 +33,15 @@ Browser
                  -> src/components/PianoKeyboard.vue (C4–B5 range)
                  -> src/domain/majorScale.ts
                  -> src/composables/useInstrumentPlayer.ts
+            -> src/views/RelativePitchHomeView.vue
+            -> src/views/RelativePitchLearnView.vue
+                 -> src/domain/relativePitch.ts
+                 -> src/composables/useInstrumentPlayer.ts (single/chord timeline)
+            -> src/views/RelativePitchPracticeView.vue
+            -> src/views/RelativePitchTonicPracticeView.vue
+                 -> src/domain/relativePitch.ts
+                 -> src/components/PianoKeyboard.vue (C4–B4 tonic range)
+                 -> src/composables/useInstrumentPlayer.ts
             -> src/views/SolfegePracticeView.vue
                  -> src/components/SolfegeMemoryPractice.vue
                       -> local setup, session and scoring state
@@ -54,13 +63,13 @@ Browser
 - 静态检查：ESLint + Antfu config，并校验 Vue 模板中的 Tailwind class。
 - 构建：Vite，生产资源输出到 `dist/`。
 - 发布：GitHub Actions -> GitHub Pages，公共路径为 `/music-game/`。
-- 数据：唱名和钢琴领域数据、生成和判分位于 `src/domain/`，`pitchClass` 与具体 `midiNote` 分开建模；设置、会话和汇总仅在内存，逐项记录、本地存储、错题复盘和 MIDI 输入尚未实现。
-- 音频：唱名继续由 HTML Audio composable 管理；可演奏乐器注册到应用级 `InstrumentRegistry`，共享平台无关的 `InstrumentAudioEngine` 契约和 `useInstrumentPlayer` 交互控制器。当前钢琴使用共享 Tone.js 适配器、自托管 Salamander 稀疏采样和 PolySynth 降级，支持定长音符、复音按下/松开、活动高亮及可取消序列。
+- 数据：唱名、钢琴、自然大调和相对音高领域数据、生成和判定位于 `src/domain/`，`pitchClass` 与具体 `midiNote` 分开建模；设置、会话和汇总仅在内存，逐项记录、本地存储、错题复盘和 MIDI 输入尚未实现。
+- 音频：唱名继续由 HTML Audio composable 管理；可演奏乐器注册到应用级 `InstrumentRegistry`，共享平台无关的 `InstrumentAudioEngine` 契约和 `useInstrumentPlayer` 交互控制器。当前钢琴使用共享 Tone.js 适配器、自托管 Salamander 稀疏采样和 PolySynth 降级，支持定长音符、复音按下/松开、活动高亮、可取消序列及相对音高所需的可取消单音/和弦时间线。
 - 工具：`/tools/:tool` 与训练路由分离，工具不出题、不判分、不写入训练记录；`src/tools/catalog.ts` 是导航发现信息，页面仍按路由懒加载。
 
 ## Current Constraints
 
-- 当前真实路由为首页 `/`、唱名训练 `/solfege`、钢琴键位 `/keyboard`、自然大调学习 `/scales/learn`、自然大调练习 `/scales/practice` 和自由钢琴工具 `/tools/piano`；其他导航入口仍是规划占位。
+- 当前真实路由为首页 `/`、唱名训练 `/solfege`、钢琴键位 `/keyboard`、自然大调学习/练习 `/scales/learn` 与 `/scales/practice`、相对音高模块 `/ear`（含学习、练习目录和主音感训练）及自由钢琴工具 `/tools/piano`；其他导航入口仍是规划占位。
 - 唱名 S1–S4 的核心文字交互已拆为独立组件，并把题型与受控生成提取到纯 TypeScript 领域模块；逐项答题记录、随机题复现和错题回顾尚未实现，其他训练模块也尚无共享训练引擎。
 - 仓库中保留 Vue starter components，但当前入口没有引用它们。
 - 钢琴领域有 Node 原生确定性单元测试，覆盖生成/判分/展示控制器、MIDI note 转换和采样音域覆盖；`npm run check` 覆盖 lint、类型检查、生产构建和 `npm test`，尚无浏览器 E2E。

@@ -71,6 +71,15 @@ const stages: Stage[] = [
     tone: 'purple',
     status: 'ready',
   },
+  {
+    step: '05',
+    title: '相对音高',
+    description: '先找到主音 1，再逐步听懂旋律',
+    progress: 0,
+    lessons: '学习 + 练习',
+    tone: 'blue',
+    status: 'ready',
+  },
 ]
 
 const toneClasses = {
@@ -108,6 +117,11 @@ function startSolfegePractice() {
 }
 
 function handleStageAction(stage: Stage) {
+  if (stage.step === '05') {
+    void router.push({ name: 'relative-pitch-home' })
+    return
+  }
+
   if (stage.step === '04') {
     void router.push({ name: 'scale-learn' })
     return
@@ -286,7 +300,8 @@ function handleStageAction(stage: Stage) {
                       <svg v-if="stage.step === '01'" viewBox="0 0 24 24" class="size-6" aria-hidden="true"><path d="M8 17V6l9-2v11" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" /><circle cx="6" cy="17" r="2.3" fill="currentColor" /><circle cx="15" cy="15" r="2.3" fill="currentColor" /></svg>
                       <svg v-else-if="stage.step === '02'" viewBox="0 0 24 24" class="size-6" aria-hidden="true"><path d="M3 6h18v13H3z" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M7 6v8m5-8v8m5-8v8M5.5 14V6h3v8m2 0V6h3v8m2 0V6h3v8" fill="none" stroke="currentColor" stroke-width="1.5" /></svg>
                       <svg v-else-if="stage.step === '03'" viewBox="0 0 24 24" class="size-6" aria-hidden="true"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.8" /><path d="M12 7v5l3.5 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" /></svg>
-                      <svg v-else viewBox="0 0 24 24" class="size-6" aria-hidden="true"><path d="M4 18 9 9l3 5 3-8 5 12H4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /></svg>
+                      <svg v-else-if="stage.step === '04'" viewBox="0 0 24 24" class="size-6" aria-hidden="true"><path d="M4 18 9 9l3 5 3-8 5 12H4Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" /></svg>
+                      <svg v-else viewBox="0 0 24 24" class="size-6" aria-hidden="true"><path d="M4 12h2m2.5-4v8m3.5-11v14m3.5-11v8m2.5-4h2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" /></svg>
                     </div>
 
                     <div class="min-w-0 flex-1">
@@ -311,11 +326,11 @@ function handleStageAction(stage: Stage) {
                     </div>
                   </div>
 
-                  <div v-if="stage.step === '04'" class="mt-4 grid grid-cols-2 gap-2">
-                    <RouterLink :to="{ name: 'scale-learn' }" class="grid min-h-11 place-items-center rounded-xl border border-line text-xs font-extrabold transition-colors hover:border-brand/30 hover:bg-brand-soft hover:text-brand-dark">
+                  <div v-if="stage.step === '04' || stage.step === '05'" class="mt-4 grid grid-cols-2 gap-2">
+                    <RouterLink :to="{ name: stage.step === '04' ? 'scale-learn' : 'relative-pitch-learn' }" class="grid min-h-11 place-items-center rounded-xl border border-line text-xs font-extrabold transition-colors hover:border-brand/30 hover:bg-brand-soft hover:text-brand-dark">
                       开始学习
                     </RouterLink>
-                    <RouterLink :to="{ name: 'scale-practice' }" class="grid min-h-11 place-items-center rounded-xl bg-brand text-xs font-extrabold text-white transition-colors hover:bg-brand-dark">
+                    <RouterLink :to="{ name: stage.step === '04' ? 'scale-practice' : 'relative-pitch-practice', query: stage.step === '05' ? { mode: 'fixed' } : {} }" class="grid min-h-11 place-items-center rounded-xl bg-brand text-xs font-extrabold text-white transition-colors hover:bg-brand-dark">
                       开始练习
                     </RouterLink>
                   </div>

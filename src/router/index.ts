@@ -34,6 +34,30 @@ const router = createRouter({
       meta: { title: '自然大调练习 · 音阶阶' },
     },
     {
+      path: '/ear',
+      name: 'relative-pitch-home',
+      component: () => import('@/views/RelativePitchHomeView.vue'),
+      meta: { title: '相对音高 · 音阶阶' },
+    },
+    {
+      path: '/ear/learn',
+      name: 'relative-pitch-learn',
+      component: () => import('@/views/RelativePitchLearnView.vue'),
+      meta: { title: '相对音高学习 · 音阶阶' },
+    },
+    {
+      path: '/ear/practice',
+      name: 'relative-pitch-practice',
+      component: () => import('@/views/RelativePitchPracticeView.vue'),
+      meta: { title: '相对音高练习 · 音阶阶' },
+    },
+    {
+      path: '/ear/practice/tonic',
+      name: 'relative-pitch-tonic',
+      component: () => import('@/views/RelativePitchTonicPracticeView.vue'),
+      meta: { title: '主音感训练 · 音阶阶' },
+    },
+    {
       path: '/tools/piano',
       name: 'tool-piano',
       component: () => import('@/views/tools/PianoToolView.vue'),

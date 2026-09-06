@@ -31,7 +31,16 @@ index.html
                                 -> /src/audio/instrumentAudio.ts
                                 -> /src/audio/tonePianoAudio.ts
                                      -> Tone.Sampler / Tone.PolySynth
-                                     -> /public/audio/piano/salamander/
+                                -> /public/audio/piano/salamander/
+                 -> /src/views/RelativePitchHomeView.vue
+                 -> /src/views/RelativePitchLearnView.vue
+                      -> /src/domain/relativePitch.ts
+                      -> /src/composables/useInstrumentPlayer.ts
+                 -> /src/views/RelativePitchPracticeView.vue
+                 -> /src/views/RelativePitchTonicPracticeView.vue
+                      -> /src/domain/relativePitch.ts
+                      -> /src/components/PianoKeyboard.vue
+                      -> /src/composables/useInstrumentPlayer.ts
                  -> /src/views/tools/PianoToolView.vue
                       -> /src/tools/catalog.ts
                       -> /src/components/PianoKeyboard.vue
@@ -52,13 +61,15 @@ index.html
 | `src/views/tools/PianoToolView.vue` | 不出题、不计分的自由钢琴交互 | 工具路由 `/tools/piano` |
 | `src/tools/catalog.ts` | 已上线工具的发现元数据 | 可供未来工具中心和导航复用，不承载运行状态 |
 | `src/views/SolfegePracticeView.vue` | 唱名训练页编排和返回首页导航 | 训练路由 `/solfege` |
+| `src/views/RelativePitch*View.vue` | 相对音高入口、学习、四类练习目录和十二调主音感训练 | 当前不评分、不保存错题，仅主音感可练 |
+| `src/domain/relativePitch.ts` | 十二调主音题目、四种调性提示、音频步骤、判定和精选短音型清单 | 不依赖 Vue/Tone；固定主音音域 C4–B4 |
 | `src/components/SolfegeMemoryPractice.vue` | 唱名 S1–S4 核心设置、单项/序列交互、会话与汇总 | 状态仅在组件内存中，退出或刷新后不保留 |
 | `src/domain/solfegePractice.ts` | 唱名类型、平衡牌组、方向队列和题目映射 | 不依赖 Vue，可传入随机函数 |
 | `src/domain/pitch.ts` | pitch class、MIDI note 构造与科学音高转换 | 不依赖 Vue/Tone；MIDI 范围在构造边界校验 |
 | `src/domain/piano.ts` | 任意 MIDI 范围的琴键几何、音名、快捷键、mark 类型和状态优先级 | 同时供工具、键位训练和大调模块使用，不含题目或判分 |
 | `src/audio/` | 通用乐器契约与注册表、钢琴定义、采样清单和 Tone.js 适配器 | 共享实例跨路由复用已解码采样；页面卸载只停止，不销毁缓存 |
 | `src/composables/instrumentInjection.ts` | 把乐器注册表注入 Vue 应用并按稳定 id 解析乐器 | 新乐器通过注册定义接入，不要求练习导入具体声音实现 |
-| `src/composables/useInstrumentPlayer.ts` | 统一声音状态、生命周期、活动音符、持续按键和可取消序列 | 视觉组件只消费 active notes，不依赖 Tone.js |
+| `src/composables/useInstrumentPlayer.ts` | 统一声音状态、生命周期、活动音符、持续按键、可取消序列和单音/和弦时间线 | 视觉组件只消费 active notes，不依赖 Tone.js |
 | `src/assets/main.css` | Tailwind 入口、设计 token、全局基线 | 当前实际被 `main.ts` 导入 |
 | `src/assets/base.css` | Vue starter 遗留样式 | 当前未被入口导入 |
 | `src/components/` | 可复用或可独立表达的交互组件 | 当前包含唱名记忆训练；目录中仍保留未引用的 Vue starter 示例 |

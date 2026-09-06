@@ -11,12 +11,23 @@ interface SequenceOptions extends PlayNoteOptions {
   intervalMilliseconds?: number
 }
 
+export interface InstrumentTimelineStep {
+  notes: readonly MidiNote[]
+  durationMilliseconds: number
+  gapMilliseconds: number
+}
+
+interface TimelineOptions extends Omit<PlayNoteOptions, 'durationSeconds'> {
+  onComplete?: () => void
+}
+
 export function useInstrumentPlayer(instrumentId: string) {
   const instrument = useInstrument(instrumentId)
   const engine = instrument.audio
   const error = ref('')
   const status = ref(engine.state.status)
   const activeNotes = ref<MidiNote[]>([])
+  const isPlaying = ref(false)
   const heldNotes = new Set<MidiNote>()
   const timers = new Set<ReturnType<typeof setTimeout>>()
   let generation = 0
@@ -61,6 +72,7 @@ export function useInstrumentPlayer(instrumentId: string) {
     clearTimers()
     heldNotes.clear()
     activeNotes.value = []
+    isPlaying.value = false
     engine.stop()
   }
 
@@ -94,25 +106,53 @@ export function useInstrumentPlayer(instrumentId: string) {
   }
 
   function playSequence(notes: readonly MidiNote[], options: SequenceOptions = {}) {
-    stop()
-    const current = generation
     const intervalMilliseconds = options.intervalMilliseconds ?? 480
     const durationSeconds = options.durationSeconds ?? Math.min(0.55, intervalMilliseconds / 1000)
-    void unlock()
-    notes.forEach((note, index) => {
+    void playTimeline(notes.map(note => ({
+      notes: [note],
+      durationMilliseconds: durationSeconds * 1000,
+      gapMilliseconds: Math.max(0, intervalMilliseconds - durationSeconds * 1000),
+    })), { velocity: options.velocity })
+  }
+
+  async function playTimeline(steps: readonly InstrumentTimelineStep[], options: TimelineOptions = {}) {
+    stop()
+    const current = generation
+    isPlaying.value = true
+    const available = await unlock()
+    if (current !== generation) {
+      return
+    }
+
+    let offset = 0
+    for (const step of steps) {
       schedule(() => {
         if (current !== generation) {
           return
         }
-        activeNotes.value = [note]
-        engine.playNote(note, { durationSeconds, velocity: options.velocity })
-      }, index * intervalMilliseconds)
-    })
+        activeNotes.value = [...step.notes]
+        if (available) {
+          step.notes.forEach(note => engine.playNote(note, {
+            durationSeconds: step.durationMilliseconds / 1000,
+            velocity: options.velocity,
+          }))
+        }
+      }, offset)
+      schedule(() => {
+        if (current === generation) {
+          activeNotes.value = activeNotes.value.filter(note => !step.notes.includes(note))
+        }
+      }, offset + step.durationMilliseconds)
+      offset += step.durationMilliseconds + step.gapMilliseconds
+    }
+
     schedule(() => {
       if (current === generation) {
         activeNotes.value = []
+        isPlaying.value = false
+        options.onComplete?.()
       }
-    }, notes.length * intervalMilliseconds)
+    }, offset)
   }
 
   function setVolume(volume: number) {
@@ -128,8 +168,10 @@ export function useInstrumentPlayer(instrumentId: string) {
     activeNotes,
     error,
     instrument,
+    isPlaying,
     playNote,
     playSequence,
+    playTimeline,
     prepare,
     pressNote,
     releaseNote,
