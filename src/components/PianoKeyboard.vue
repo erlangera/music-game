@@ -75,7 +75,8 @@ function accessibleDetail(midi: MidiNote) {
 }
 
 function isDepressed(midi: MidiNote) {
-  return pointerDepressedNotes.value.includes(midi) || props.depressedNotes?.includes(midi)
+  return pointerDepressedNotes.value.includes(midi)
+    || props.depressedNotes?.includes(midi)
 }
 
 function accessibleLabel(midi: MidiNote) {
@@ -112,6 +113,19 @@ function handlePointerEnd(midi: MidiNote) {
     emit('noteOff', midi)
   }
 }
+
+function handleKeyboardDown(event: KeyboardEvent, midi: MidiNote) {
+  if (!props.interactive || event.repeat) {
+    return
+  }
+  emit('noteOn', midi)
+}
+
+function handleKeyboardEnd(midi: MidiNote) {
+  if (props.interactive) {
+    emit('noteOff', midi)
+  }
+}
 </script>
 
 <template>
@@ -131,6 +145,9 @@ function handlePointerEnd(midi: MidiNote) {
         :aria-pressed="interactive ? isDepressed(key.midi) : undefined"
         @click="emit('select', key.midi)" @pointerdown="handlePointerDown($event, key.midi)"
         @pointerup="handlePointerEnd(key.midi)" @pointercancel="handlePointerEnd(key.midi)"
+        @keydown.enter="handleKeyboardDown($event, key.midi)" @keydown.space="handleKeyboardDown($event, key.midi)"
+        @keyup.enter="handleKeyboardEnd(key.midi)" @keyup.space="handleKeyboardEnd(key.midi)"
+        @blur="handleKeyboardEnd(key.midi)"
       >
         <span v-if="showLabels" class="flex flex-col items-center text-[9px] leading-tight font-extrabold sm:text-sm">
           <span>{{ primaryLabel(key.midi) }}</span>

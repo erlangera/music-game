@@ -45,18 +45,26 @@ export function shuffle<T>(values: readonly T[], random = Math.random): T[] {
 }
 
 export function createDirectionOrder(count: number, random = Math.random): QuestionDirection[] {
+  if (!Number.isInteger(count) || count < 0) {
+    throw new RangeError('Direction count must be a non-negative integer')
+  }
+
   const firstDirectionCount = Math.ceil(count / 2)
   const directions: QuestionDirection[] = [
     ...Array.from<QuestionDirection>({ length: firstDirectionCount }).fill('name-to-degree'),
     ...Array.from<QuestionDirection>({ length: count - firstDirectionCount }).fill('degree-to-name'),
   ]
-  let nextOrder = shuffle(directions, random)
 
-  while (hasThreeConsecutiveDirections(nextOrder)) {
-    nextOrder = shuffle(directions, random)
+  for (let attempt = 0; attempt < 32; attempt++) {
+    const candidate = shuffle(directions, random)
+    if (!hasThreeConsecutiveDirections(candidate)) {
+      return candidate
+    }
   }
 
-  return nextOrder
+  return Array.from({ length: count }, (_, index) => (
+    index % 2 === 0 ? 'name-to-degree' : 'degree-to-name'
+  ))
 }
 
 export function createBalancedPairDeck(totalItems: number, random = Math.random): SolfegePair[] {

@@ -387,7 +387,11 @@ function handleKeydown(event: KeyboardEvent) {
     return
   }
   if (phase.value === 'result') {
-    if (event.key === 'Enter') {
+    const target = event.target
+    const isInteractiveTarget = target instanceof HTMLElement
+      && Boolean(target.closest('button, a, input, select, textarea, [contenteditable="true"]'))
+    if (event.key === 'Enter' && !isInteractiveTarget) {
+      event.preventDefault()
       restartSession()
     }
     return
