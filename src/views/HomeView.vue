@@ -65,11 +65,11 @@ const stages: Stage[] = [
   {
     step: '04',
     title: '自然大调',
-    description: '理解音阶公式，并迁移到常用调',
+    description: '理解音阶公式，并迁移到十二个主音',
     progress: 0,
-    lessons: '完成上一阶段解锁',
+    lessons: '共 13 课',
     tone: 'purple',
-    status: 'locked',
+    status: 'ready',
   },
 ]
 
@@ -108,6 +108,11 @@ function startSolfegePractice() {
 }
 
 function handleStageAction(stage: Stage) {
+  if (stage.step === '04') {
+    void router.push({ name: 'scale-learn' })
+    return
+  }
+
   if (stage.step === '02') {
     void router.push({ name: 'keyboard' })
     return
@@ -306,7 +311,15 @@ function handleStageAction(stage: Stage) {
                     </div>
                   </div>
 
-                  <button v-if="stage.status !== 'locked'" type="button" class="mt-4 min-h-11 w-full rounded-xl border border-line text-xs font-extrabold transition-colors hover:border-brand/30 hover:bg-brand-soft hover:text-brand-dark" @click="handleStageAction(stage)">
+                  <div v-if="stage.step === '04'" class="mt-4 grid grid-cols-2 gap-2">
+                    <RouterLink :to="{ name: 'scale-learn' }" class="grid min-h-11 place-items-center rounded-xl border border-line text-xs font-extrabold transition-colors hover:border-brand/30 hover:bg-brand-soft hover:text-brand-dark">
+                      开始学习
+                    </RouterLink>
+                    <RouterLink :to="{ name: 'scale-practice' }" class="grid min-h-11 place-items-center rounded-xl bg-brand text-xs font-extrabold text-white transition-colors hover:bg-brand-dark">
+                      开始练习
+                    </RouterLink>
+                  </div>
+                  <button v-else-if="stage.status !== 'locked'" type="button" class="mt-4 min-h-11 w-full rounded-xl border border-line text-xs font-extrabold transition-colors hover:border-brand/30 hover:bg-brand-soft hover:text-brand-dark" @click="handleStageAction(stage)">
                     {{ stage.status === 'ready' ? '开始学习' : '继续学习' }}
                   </button>
                 </article>

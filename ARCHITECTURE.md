@@ -21,7 +21,16 @@ Browser
                            -> src/audio/instrumentAudio.ts (platform-neutral contract)
                            -> src/audio/tonePianoAudio.ts
                                 -> Tone.Sampler + self-hosted Salamander samples
-                                -> Tone.PolySynth fallback
+                           -> Tone.PolySynth fallback
+            -> src/views/MajorScaleLearnView.vue
+                 -> src/components/ScalePianoKeyboard.vue
+                 -> src/domain/majorScale.ts
+                 -> src/composables/usePianoAudio.ts
+            -> src/views/MajorScalePracticeView.vue
+                 -> src/components/MajorScalePractice.vue
+                 -> src/components/ScalePianoKeyboard.vue
+                 -> src/domain/majorScale.ts
+                 -> src/composables/usePianoAudio.ts
             -> src/views/SolfegePracticeView.vue
                  -> src/components/SolfegeMemoryPractice.vue
                       -> local setup, session and scoring state
@@ -49,10 +58,11 @@ Browser
 
 ## Current Constraints
 
-- 当前真实路由为首页 `/`、唱名训练 `/solfege`、钢琴键位 `/keyboard` 和自由钢琴工具 `/tools/piano`；其他导航入口仍是规划占位。
+- 当前真实路由为首页 `/`、唱名训练 `/solfege`、钢琴键位 `/keyboard`、自然大调学习 `/scales/learn`、自然大调练习 `/scales/practice` 和自由钢琴工具 `/tools/piano`；其他导航入口仍是规划占位。
 - 唱名 S1–S4 的核心文字交互已拆为独立组件，并把题型与受控生成提取到纯 TypeScript 领域模块；逐项答题记录、随机题复现和错题回顾尚未实现，其他训练模块也尚无共享训练引擎。
 - 仓库中保留 Vue starter components，但当前入口没有引用它们。
 - 钢琴领域有 Node 原生确定性单元测试，覆盖生成/判分/展示控制器、MIDI note 转换和采样音域覆盖；`npm run check` 覆盖 lint、类型检查、生产构建和 `npm test`，尚无浏览器 E2E。
+- 自然大调领域以 pitch class 计算、按调性保存拼写，并用具体 MIDI note 表示低八度起始的八音序列；课程和训练共享钢琴音频，但使用独立的 C4–B5 两八度展示组件。
 - 当前实现覆盖首页、模块一核心交互和模块二双向键位训练（含序列），不能据此推断完整训练引擎、记录或解锁闭环已存在。
 
 ## Detailed Knowledge
