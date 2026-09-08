@@ -90,7 +90,7 @@ export function useSolfegeAudio() {
           timer = window.setTimeout(() => {
             settle = undefined
             resolve(true)
-          }, 1500)
+          }, 1000)
         })
       }
     }

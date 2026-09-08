@@ -72,6 +72,7 @@ npm run preview
 - 视觉 token 优先定义在 `src/assets/main.css` 的 `@theme` 中，避免在多处复制语义颜色。
 - 交互控件必须有可访问名称，并保持键盘焦点可见。
 - 页面至少考虑 320px 宽度和桌面布局；不要只验证单一视口。
+- 练习设置入口统一以唱名设置页为参考标准，复用 `PracticeSetupDialog.vue`，固定头部和底部、仅中间设置项滚动；新增或修改模块前读取 `docs/architecture/frontend.md` 的 Practice Setup Standard。
 
 ## Definition of Done
 

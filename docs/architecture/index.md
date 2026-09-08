@@ -79,6 +79,12 @@ index.html
 | `public/` | 原样发布的静态资源 | 包含唱名 MP3、Salamander 钢琴 MP3 和相邻授权说明 |
 | `vite.config.ts` | Vue/Tailwind 插件、别名、部署 base | GitHub Pages 路径依赖 base 配置 |
 
+## Shared Practice Setup
+
+唱名设置页是所有练习设置入口的项目参考标准，新增模块也须遵循；完整约定见 [Practice Setup Standard](frontend.md#practice-setup-standard)。
+
+五个训练入口（唱名、钢琴、自然大调、主音感、核心音级听辨）使用 `PracticeSetupDialog.vue`。共享层只负责原生模态 dialog、标题与说明、固定头部/底部、内部滚动、初始焦点、Escape 取消和背景滚动锁定；通过默认 slot 接收设置项，通过 start/cancel 事件交回会话组件。设置值、音频准备、开始/返回路径和训练状态仍由各模块管理。
+
 ## Build and Delivery
 
 1. `npm run check` 并行执行 ESLint、`npm test` 和 `npm run build`；build 内部并行执行类型检查和 `vite build`。测试使用 Node 原生 TypeScript 支持，无新增测试依赖。

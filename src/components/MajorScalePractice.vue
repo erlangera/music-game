@@ -4,6 +4,7 @@ import type { PianoKeyMark } from '@/domain/piano'
 import type { MidiNote } from '@/domain/pitch'
 import { computed, nextTick, onMounted, ref } from 'vue'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
+import PracticeSetupDialog from '@/components/PracticeSetupDialog.vue'
 import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
 import {
   accidentalOf,
@@ -294,18 +295,18 @@ onMounted(() => void prepare())
     </header>
 
     <main class="mx-auto max-w-6xl px-3 py-8 sm:px-8 sm:py-12">
-      <section v-if="phase === 'setup'" class="grid gap-8 rounded-3xl border border-line bg-white p-5 shadow-card sm:p-9 lg:grid-cols-[0.85fr_1.15fr] lg:gap-12">
+      <section v-if="phase === 'setup'" class="rounded-3xl border border-line bg-white p-5 opacity-60 shadow-card sm:p-6">
         <div>
           <p class="text-xs font-extrabold tracking-widest text-brand">
             自然大调训练
           </p>
-          <h1 ref="heading" tabindex="-1" class="mt-3 text-3xl/tight font-black outline-none sm:text-4xl">
-            把音阶从“知道”<br>练成“直接想起”
+          <h1 class="mt-2 text-xl/tight font-black outline-none sm:text-2xl">
+            把音阶从“知道”练成“直接想起”
           </h1>
-          <p class="mt-5 text-sm/7 text-muted">
+          <p class="mt-3 text-sm/6 text-muted">
             练习从七个白键和五个黑键开始的十二个自然大调。每道题只考察变化音、音级映射或钢琴键位中的一个核心能力。
           </p>
-          <div class="mt-7 overflow-hidden rounded-2xl border border-line bg-canvas p-4">
+          <div class="mt-4 hidden overflow-hidden rounded-2xl border border-line bg-canvas p-4 md:block">
             <div class="flex items-center justify-between text-xs font-extrabold text-muted">
               <span>白键主音 · 7</span><span>黑键主音 · 5</span>
             </div>
@@ -314,49 +315,6 @@ onMounted(() => void prepare())
             </div>
           </div>
         </div>
-
-        <form class="space-y-6" @submit.prevent="begin()">
-          <h2 class="text-lg font-extrabold">
-            训练设置
-          </h2>
-          <fieldset>
-            <legend class="mb-3 text-sm font-bold text-muted">
-              训练内容
-            </legend>
-            <div class="grid gap-2 sm:grid-cols-2">
-              <label v-for="option in focusOptions" :key="option.value" class="flex min-h-16 cursor-pointer items-center justify-between gap-3 rounded-xl border p-3 has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.focus === option.value ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
-                <span><strong class="block text-sm">{{ option.label }}</strong><span class="mt-1 block text-[11px] text-muted">{{ option.description }}</span></span>
-                <input v-model="settings.focus" type="radio" name="focus" :value="option.value" class="size-4 accent-brand">
-              </label>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend class="mb-3 text-sm font-bold text-muted">
-              练习调性
-            </legend>
-            <div class="grid grid-cols-4 gap-2 sm:grid-cols-7">
-              <label v-for="id in (['all', ...majorScaleIds] as const)" :key="id" class="grid min-h-11 cursor-pointer place-items-center rounded-xl border text-sm font-extrabold has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.key === id ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
-                <input v-model="settings.key" type="radio" name="key" :value="id" class="sr-only">{{ id === 'all' ? '全部' : id }}
-              </label>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend class="mb-3 text-sm font-bold text-muted">
-              训练长度
-            </legend>
-            <div class="grid grid-cols-2 gap-3">
-              <label v-for="mode in (['fixed', 'infinite'] as const)" :key="mode" class="flex min-h-14 cursor-pointer items-center justify-between gap-2 rounded-xl border p-3 text-sm font-bold has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.mode === mode ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
-                {{ mode === 'fixed' ? '10 题' : '无限训练 ∞' }}<input v-model="settings.mode" type="radio" name="mode" :value="mode" class="size-4 accent-brand">
-              </label>
-            </div>
-          </fieldset>
-          <button type="submit" class="min-h-14 w-full rounded-xl bg-brand text-base font-extrabold text-white hover:bg-brand-dark">
-            开始训练 →
-          </button>
-          <p class="text-center text-xs/5 text-muted" role="status">
-            {{ setupAudioMessage }}
-          </p>
-        </form>
       </section>
 
       <section v-else-if="phase === 'playing' && question" class="rounded-3xl border border-line bg-white px-3 py-7 shadow-card sm:p-9">
@@ -509,5 +467,42 @@ onMounted(() => void prepare())
         </button>
       </section>
     </main>
+
+    <PracticeSetupDialog v-if="phase === 'setup'" title="开始自然大调训练" description="选择训练内容、调性和题目数量" cancel-label="返回首页" @start="begin()" @cancel="leave">
+      <fieldset>
+        <legend class="mb-2 text-sm font-bold text-muted">
+          训练内容
+        </legend>
+        <div class="grid gap-2 sm:grid-cols-2">
+          <label v-for="option in focusOptions" :key="option.value" class="flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 p-3 has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.focus === option.value ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
+            <span><strong class="block text-sm">{{ option.label }}</strong><span class="mt-1 block text-[11px] text-muted">{{ option.description }}</span></span>
+            <input v-model="settings.focus" type="radio" name="focus" :value="option.value" class="size-4 accent-brand">
+          </label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend class="mb-2 text-sm font-bold text-muted">
+          练习调性
+        </legend>
+        <div class="grid grid-cols-4 gap-2 sm:grid-cols-7">
+          <label v-for="id in (['all', ...majorScaleIds] as const)" :key="id" class="grid min-h-12 cursor-pointer place-items-center rounded-xl border text-sm font-extrabold has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.key === id ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
+            <input v-model="settings.key" type="radio" name="key" :value="id" class="sr-only">{{ id === 'all' ? '全部' : id }}
+          </label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend class="mb-2 text-sm font-bold text-muted">
+          训练长度
+        </legend>
+        <div class="grid grid-cols-2 gap-3">
+          <label v-for="mode in (['fixed', 'infinite'] as const)" :key="mode" class="flex min-h-12 cursor-pointer items-center justify-between gap-2 rounded-2xl border-2 p-3 text-sm font-bold has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.mode === mode ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
+            {{ mode === 'fixed' ? '10 题' : '无限训练 ∞' }}<input v-model="settings.mode" type="radio" name="mode" :value="mode" class="size-4 accent-brand">
+          </label>
+        </div>
+      </fieldset>
+      <p class="text-center text-xs/5 text-muted" role="status">
+        {{ setupAudioMessage }}
+      </p>
+    </PracticeSetupDialog>
   </div>
 </template>

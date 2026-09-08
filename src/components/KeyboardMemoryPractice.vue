@@ -4,11 +4,13 @@ import type { PianoKeyMark } from '@/domain/piano'
 import type { MidiNote } from '@/domain/pitch'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
+import PracticeSetupDialog from '@/components/PracticeSetupDialog.vue'
 import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
 import { createHighlightPlayer, createKeyboardGenerator, isCorrectKey, namedPitch, pianoKeys, pianoKeyShortcuts } from '@/domain/keyboardPractice'
 import { pitchClassOf } from '@/domain/pitch'
 
 const emit = defineEmits<{ exit: [] }>()
+const sequencePresets = [1, 4, 8, 12] as const
 const directions: { value: KeyboardDirectionSetting, label: string }[] = [
   { value: 'name-to-key', label: '音名 → 琴键' },
   { value: 'key-to-name', label: '琴键 → 音名' },
@@ -256,71 +258,21 @@ onBeforeUnmount(() => {
     </header>
 
     <main class="mx-auto max-w-5xl px-3 py-8 sm:px-8 sm:py-14">
-      <section v-if="phase === 'setup'" class="grid gap-8 rounded-3xl border border-line bg-white p-5 shadow-card sm:p-9 md:grid-cols-2 md:gap-12">
+      <section v-if="phase === 'setup'" class="rounded-3xl border border-line bg-white p-5 opacity-60 shadow-card sm:p-6">
         <div>
           <p class="text-xs font-extrabold tracking-widest text-brand">
             钢琴键位记忆
           </p>
-          <h1 ref="heading" tabindex="-1" class="mt-3 text-3xl/tight font-black outline-none sm:text-4xl">
-            把十二音<br>真正记到手上
+          <h1 class="mt-2 text-xl/tight font-black outline-none sm:text-2xl">
+            把十二音真正记到手上
           </h1>
-          <p class="mt-5 text-sm/7 text-muted">
+          <p class="mt-3 text-sm/6 text-muted">
             看音名找到琴键，或看琴键选择音名。通过完整的黑白键布局，练习黑白键与十二音的空间位置。
           </p>
-          <div class="mt-7" aria-hidden="true">
+          <div class="mt-4 hidden md:block" aria-hidden="true">
             <PianoKeyboard compact />
           </div>
         </div>
-        <form class="space-y-6" @submit.prevent="begin()">
-          <h2 class="text-lg font-extrabold">
-            训练设置
-          </h2>
-          <fieldset>
-            <legend class="mb-3 text-sm font-bold text-muted">
-              训练方向
-            </legend>
-            <label v-for="direction in directions" :key="direction.value" class="mb-3 flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-xl border p-4 text-sm font-bold has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.direction === direction.value ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
-              {{ direction.label }}
-              <input v-model="settings.direction" type="radio" name="direction" :value="direction.value" class="size-4 accent-brand">
-            </label>
-          </fieldset>
-          <fieldset>
-            <legend class="mb-3 text-sm font-bold text-muted">
-              训练长度
-            </legend>
-            <div class="grid grid-cols-2 gap-3">
-              <label v-for="mode in (['fixed', 'infinite'] as const)" :key="mode" class="flex min-h-14 cursor-pointer items-center justify-between gap-2 rounded-xl border p-3 text-sm font-bold has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.mode === mode ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
-                {{ mode === 'fixed' ? '10 题' : '无限训练 ∞' }}
-                <input v-model="settings.mode" type="radio" name="mode" :value="mode" class="size-4 accent-brand">
-              </label>
-            </div>
-          </fieldset>
-          <fieldset>
-            <legend class="mb-3 text-sm font-bold text-muted">
-              每题音符数量
-            </legend>
-            <div class="grid grid-cols-6 gap-2">
-              <label v-for="count in 12" :key="count" class="flex min-h-11 cursor-pointer items-center justify-center rounded-xl border text-sm font-bold has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.sequenceLength === count ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
-                <input v-model="settings.sequenceLength" type="radio" name="sequence-length" :value="count" :aria-label="`${count} 项`" class="sr-only">{{ count }}
-              </label>
-            </div>
-            <p class="mt-2 text-xs text-muted">
-              1 项为单音；2–12 项按顺序作答。
-            </p>
-          </fieldset>
-          <p class="text-xs/6 text-muted">
-            出题范围包含全部黑白键，升降音名随机展示，等价音均算正确。序列中任意一项答错即结束本题。
-          </p>
-          <button type="submit" class="min-h-14 w-full rounded-xl bg-brand text-base font-extrabold text-white hover:bg-brand-dark">
-            开始训练 →
-          </button>
-          <p class="text-center text-xs/5 text-muted" role="status">
-            {{ setupAudioMessage }}
-          </p>
-          <p class="text-center text-[10px]/4 text-muted">
-            钢琴采样：<a class="underline hover:text-ink" href="https://github.com/sfzinstruments/SalamanderGrandPiano" target="_blank" rel="noreferrer">Salamander Grand Piano</a> · Alexander Holm · <a class="underline hover:text-ink" href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>
-          </p>
-        </form>
       </section>
 
       <section v-else-if="phase === 'playing' && question" class="rounded-3xl border border-line bg-white px-3 py-7 shadow-card sm:px-10 sm:py-9">
@@ -416,5 +368,58 @@ onBeforeUnmount(() => {
         </button>
       </section>
     </main>
+
+    <PracticeSetupDialog v-if="phase === 'setup'" title="开始钢琴键位训练" description="选择训练方向、题目数量和序列长度" cancel-label="返回首页" @start="begin()" @cancel="leave">
+      <fieldset>
+        <legend class="mb-2 text-sm font-bold text-muted">
+          训练方向
+        </legend>
+        <div class="grid grid-cols-3 gap-2">
+          <label v-for="direction in directions" :key="direction.value" class="flex min-h-12 min-w-0 cursor-pointer items-center justify-center rounded-xl border-2 px-1 text-center text-[11px] font-bold whitespace-nowrap has-focus-visible:outline-2 has-focus-visible:outline-brand sm:text-sm" :class="settings.direction === direction.value ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
+            {{ direction.label }}
+            <input v-model="settings.direction" type="radio" name="direction" :value="direction.value" class="sr-only">
+          </label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend class="mb-2 text-sm font-bold text-muted">
+          训练长度
+        </legend>
+        <div class="grid grid-cols-2 gap-3">
+          <label v-for="mode in (['fixed', 'infinite'] as const)" :key="mode" class="flex min-h-12 cursor-pointer items-center justify-between gap-2 rounded-2xl border-2 p-3 text-sm font-bold has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.mode === mode ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
+            {{ mode === 'fixed' ? '10 题' : '无限训练 ∞' }}
+            <input v-model="settings.mode" type="radio" name="mode" :value="mode" class="size-4 accent-brand">
+          </label>
+        </div>
+      </fieldset>
+      <fieldset>
+        <div class="flex items-center justify-between gap-3">
+          <legend class="text-sm font-extrabold text-ink">
+            序列长度
+          </legend>
+          <span class="rounded-full bg-brand-soft px-2.5 py-1 text-[11px] font-extrabold text-brand-dark">当前：{{ settings.sequenceLength }} 项</span>
+        </div>
+        <div class="mt-2 rounded-[18px] border border-line bg-[#fbfcfa] p-4">
+          <input v-model.number="settings.sequenceLength" type="range" min="1" max="12" step="1" class="h-6 w-full cursor-pointer accent-brand" aria-label="序列长度" :aria-valuetext="`${settings.sequenceLength} 项`">
+          <div class="mt-1 flex justify-between text-[10px] font-extrabold text-muted">
+            <span>1 · 单项</span><span>12 · 挑战</span>
+          </div>
+          <div class="mt-2 grid grid-cols-4 gap-2">
+            <button v-for="(preset, index) in sequencePresets" :key="preset" type="button" class="min-h-9 rounded-xl border text-[11px] font-extrabold transition" :class="settings.sequenceLength === preset ? 'border-brand-dark bg-brand-dark text-white' : 'border-line bg-white text-muted hover:border-brand/30 hover:text-ink'" @click="settings.sequenceLength = preset">
+              {{ preset }} · {{ ['入门', '进阶', '熟练', '挑战'][index] }}
+            </button>
+          </div>
+        </div>
+      </fieldset>
+      <p class="text-xs/6 text-muted">
+        出题范围包含全部黑白键，升降音名随机展示，等价音均算正确。序列中任意一项答错即结束本题。
+      </p>
+      <p class="text-center text-xs/5 text-muted" role="status">
+        {{ setupAudioMessage }}
+      </p>
+      <p class="text-center text-[10px]/4 text-muted">
+        钢琴采样：<a class="underline hover:text-ink" href="https://github.com/sfzinstruments/SalamanderGrandPiano" target="_blank" rel="noreferrer">Salamander Grand Piano</a> · Alexander Holm · <a class="underline hover:text-ink" href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">CC BY 3.0</a>
+      </p>
+    </PracticeSetupDialog>
   </div>
 </template>

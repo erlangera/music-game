@@ -2,6 +2,7 @@
 import type { CoreScaleDegree, DegreeQuestion, RelativePitchMode, TonalHint } from '@/domain/relativePitch'
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import PracticeSetupDialog from '@/components/PracticeSetupDialog.vue'
 import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
 import {
   coreScaleDegrees,
@@ -182,18 +183,18 @@ onMounted(() => void prepare())
     </header>
 
     <main class="mx-auto max-w-6xl px-3 py-8 sm:px-8 sm:py-12">
-      <section v-if="phase === 'setup'" class="grid gap-8 rounded-3xl border border-line bg-white p-5 shadow-card sm:p-9 lg:grid-cols-[0.82fr_1.18fr] lg:gap-12">
+      <section v-if="phase === 'setup'" class="rounded-3xl border border-line bg-white p-5 opacity-60 shadow-card sm:p-6">
         <div>
           <p class="text-xs font-extrabold tracking-widest text-brand">
             核心音级听辨
           </p>
-          <h1 ref="heading" tabindex="-1" class="mt-3 text-3xl/tight font-black outline-none sm:text-4xl">
-            听出大调里的<br>“1、3、5”
+          <h1 class="mt-2 text-xl/tight font-black outline-none sm:text-2xl">
+            听出大调里的“1、3、5”
           </h1>
-          <p class="mt-5 text-sm/7 text-muted">
+          <p class="mt-3 text-sm/6 text-muted">
             每题先建立一个大调，再播放目标音。请判断它是主音 1、中音 3，还是属音 5；十二调循环出现，但不计算分数或正确率。
           </p>
-          <div class="mt-7 grid grid-cols-3 gap-2" aria-label="本轮练习的音级">
+          <div class="mt-4 hidden grid-cols-3 gap-2 md:grid" aria-label="本轮练习的音级">
             <div v-for="degree in coreScaleDegrees" :key="degree" class="rounded-2xl border border-line bg-canvas p-3 text-center">
               <strong class="block text-2xl font-black text-brand-dark">{{ degree }}</strong>
               <span class="mt-1 block text-xs font-bold">{{ degreeCopy[degree].name }}</span>
@@ -201,38 +202,6 @@ onMounted(() => void prepare())
             </div>
           </div>
         </div>
-
-        <form class="space-y-6" @submit.prevent="begin()">
-          <fieldset>
-            <legend class="mb-3 text-sm font-bold text-muted">
-              调性提示
-            </legend>
-            <div class="grid gap-2 sm:grid-cols-2">
-              <label v-for="hint in (['scale', 'triad', 'cadence', 'tonic'] as const)" :key="hint" class="flex min-h-16 cursor-pointer items-center justify-between gap-3 rounded-xl border-2 p-3 has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="draftHint === hint ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
-                <span><strong class="block text-sm">{{ tonalHintLabels[hint] }}</strong><span class="mt-1 block text-[11px] text-muted">{{ hint === 'scale' ? '最完整的调性参照' : hint === 'triad' ? '依次听 1–3–5–1' : hint === 'cadence' ? '用和声感受回到主音' : '只保留最少参照' }}</span></span>
-                <input v-model="draftHint" type="radio" name="hint" :value="hint" class="size-4 accent-brand">
-              </label>
-            </div>
-          </fieldset>
-
-          <fieldset>
-            <legend class="mb-3 text-sm font-bold text-muted">
-              练习长度
-            </legend>
-            <div class="grid grid-cols-2 gap-3">
-              <label v-for="mode in (['fixed', 'infinite'] as const)" :key="mode" class="flex min-h-14 cursor-pointer items-center justify-between gap-2 rounded-xl border-2 p-3 text-sm font-bold has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="draftMode === mode ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
-                {{ mode === 'fixed' ? '10 题' : '自由练习 ∞' }}<input v-model="draftMode" type="radio" name="mode" :value="mode" class="size-4 accent-brand">
-              </label>
-            </div>
-          </fieldset>
-
-          <button type="submit" class="min-h-14 w-full rounded-xl bg-brand text-base font-extrabold text-white hover:bg-brand-dark">
-            开始训练 →
-          </button>
-          <p class="text-center text-xs/5 text-muted" role="status">
-            {{ setupAudioMessage }}
-          </p>
-        </form>
       </section>
 
       <section v-else-if="phase === 'playing' && question" class="rounded-3xl border border-line bg-white px-3 py-7 shadow-card sm:p-9">
@@ -303,5 +272,33 @@ onMounted(() => void prepare())
         </button>
       </section>
     </main>
+
+    <PracticeSetupDialog v-if="phase === 'setup'" title="开始音级听辨训练" description="选择调性提示和题目数量，练习辨认 1、3、5" cancel-label="返回练习" @start="begin()" @cancel="leave">
+      <fieldset>
+        <legend class="mb-2 text-sm font-bold text-muted">
+          调性提示
+        </legend>
+        <div class="grid gap-2 sm:grid-cols-2">
+          <label v-for="hint in (['scale', 'triad', 'cadence', 'tonic'] as const)" :key="hint" class="flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 p-3 has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="draftHint === hint ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
+            <span><strong class="block text-sm">{{ tonalHintLabels[hint] }}</strong><span class="mt-1 block text-[11px] text-muted">{{ hint === 'scale' ? '最完整的调性参照' : hint === 'triad' ? '依次听 1–3–5–1' : hint === 'cadence' ? '用和声感受回到主音' : '只保留最少参照' }}</span></span>
+            <input v-model="draftHint" type="radio" name="hint" :value="hint" class="size-4 accent-brand">
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend class="mb-2 text-sm font-bold text-muted">
+          练习长度
+        </legend>
+        <div class="grid grid-cols-2 gap-3">
+          <label v-for="mode in (['fixed', 'infinite'] as const)" :key="mode" class="flex min-h-12 cursor-pointer items-center justify-between gap-2 rounded-2xl border-2 p-3 text-sm font-bold has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="draftMode === mode ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
+            {{ mode === 'fixed' ? '10 题' : '自由练习 ∞' }}<input v-model="draftMode" type="radio" name="mode" :value="mode" class="size-4 accent-brand">
+          </label>
+        </div>
+      </fieldset>
+      <p class="text-center text-xs/5 text-muted" role="status">
+        {{ setupAudioMessage }}
+      </p>
+    </PracticeSetupDialog>
   </div>
 </template>
