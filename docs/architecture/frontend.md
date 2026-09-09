@@ -61,3 +61,9 @@
 音频状态为 `idle/loading/ready/fallback/unavailable`。页面可在不解锁播放的情况下预加载样本；“开始训练”、琴键按下和电脑键盘输入属于用户手势，用于解锁 AudioContext。采样未就绪或失败时基础合成器仍可发声，音频不可用不阻塞视觉交互。通用契约同时提供定长 `playNote` 和持续 `startNote/stopNote`；控制器将它们映射为统一的 active notes，供任何乐器界面展示反馈。
 
 当前首页临时交互存在于 `HomeView.vue`，页面切换由路由负责，唱名训练的设置、会话、逐项判分和本轮结果存在于 `SolfegeMemoryPractice.vue`；类型和受控题目生成位于 `src/domain/solfegePractice.ts`。这些业务状态均不持久化；刷新训练路由会重新进入设置弹窗。引入全局状态库前，应先证明存在跨页面共享、复杂派生状态或调试需求；简单状态优先使用组件状态或 composable。
+
+## Practice Page Layout
+
+`PracticePageHeader.vue` 为唱名、键位和自然大调学习提供共享悬浮头部容器，统一背景、层级、移动端/桌面高度及顶部安全区。默认 slot 保留页面的标题、进度和业务操作；组件不管理训练状态。设置模态层级高于头部。
+
+键位训练采用 `h-dvh` 纵向布局，只有正文区域滚动；底部反馈为独立 flex 子项，按实际内容占高，不覆盖题面。只读演示琴键允许原生触摸滚动；可演奏琴键继续拦截触摸以支持按下/抬起。

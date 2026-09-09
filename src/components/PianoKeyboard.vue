@@ -167,10 +167,11 @@ function handleKeyboardEnd(midi: MidiNote) {
 
 <style scoped>
 [data-piano-key] {
-  touch-action: none;
+  touch-action: auto;
   user-select: none;
   transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease, filter 150ms ease, transform 90ms ease;
 }
+[data-piano-key]:enabled { touch-action: none; }
 [data-piano-key]:focus-visible { outline-offset: -4px; }
 [data-piano-key]:enabled:hover { filter: brightness(0.97); }
 [data-key-color="white"][data-state="member"] { background: color-mix(in srgb, var(--color-brand-soft) 62%, white); box-shadow: inset 0 0 0 2px rgb(31 122 85 / 0.25); }

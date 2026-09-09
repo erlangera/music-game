@@ -44,6 +44,19 @@ export function shuffle<T>(values: readonly T[], random = Math.random): T[] {
   return result
 }
 
+/** Shuffle once per question, with a bounded fallback for deterministic random sources. */
+export function createSolfegeOptionOrder(previous: readonly SolfegeName[] = [], random = Math.random): SolfegeName[] {
+  const forbidden = [allSolfegeNames.join(), [...allSolfegeNames].reverse().join(), previous.join()]
+  const candidate = shuffle(allSolfegeNames, random)
+  for (let index = 0; index < candidate.length; index++) {
+    if (!forbidden.includes(candidate.join())) {
+      return candidate
+    }
+    candidate.push(candidate.shift()!)
+  }
+  return candidate
+}
+
 export function createDirectionOrder(count: number, random = Math.random): QuestionDirection[] {
   if (!Number.isInteger(count) || count < 0) {
     throw new RangeError('Direction count must be a non-negative integer')

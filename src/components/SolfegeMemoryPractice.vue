@@ -8,16 +8,17 @@ import type {
   SolfegeName,
   SolfegePair,
 } from '@/domain/solfegePractice'
-
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
+
+import PracticePageHeader from '@/components/PracticePageHeader.vue'
 import PracticeSetupDialog from '@/components/PracticeSetupDialog.vue'
 import SpeakerIcon from '@/components/SpeakerIcon.vue'
 import { useSolfegeAudio } from '@/composables/useSolfegeAudio'
 import {
   allDegrees,
-  allSolfegeNames,
   createBalancedPairDeck,
   createFixedQuestionQueue,
+  createSolfegeOptionOrder,
   expectedAnswerAt,
   promptValueAt,
   shuffle,
@@ -101,8 +102,14 @@ const promptSequenceText = computed(() => currentQuestion.value
   ? currentQuestion.value.sequence.map((_, index) => promptValueAt(currentQuestion.value!, index)).join(' ')
   : '')
 
+let previousNameOptions: SolfegeName[] = []
+
 function createOptionOrder(direction: QuestionDirection): AnswerValue[] {
-  return [...(direction === 'name-to-degree' ? allDegrees : allSolfegeNames)]
+  if (direction === 'name-to-degree') {
+    return [...allDegrees]
+  }
+  previousNameOptions = createSolfegeOptionOrder(previousNameOptions)
+  return previousNameOptions
 }
 
 function clearAdvanceTimer() {
@@ -396,7 +403,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="min-h-screen bg-canvas">
-    <header class="border-b border-line bg-white" :inert="phase === 'setup'" :aria-hidden="phase === 'setup'">
+    <PracticePageHeader :inert="phase === 'setup'" :aria-hidden="phase === 'setup'">
       <div class="mx-auto flex min-h-16 max-w-[1180px] items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:min-h-[76px] lg:px-8">
         <button type="button" class="inline-flex min-h-11 items-center gap-2 rounded-xl px-2 text-sm font-extrabold text-muted transition-colors hover:bg-canvas hover:text-ink sm:px-3" @click="handleExitAction">
           <svg viewBox="0 0 20 20" class="size-4" aria-hidden="true"><path d="m12.5 4.5-5.5 5.5 5.5 5.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
@@ -421,7 +428,7 @@ onBeforeUnmount(() => {
       <div class="h-1 bg-[#edf0ed]" aria-hidden="true">
         <div v-if="activeSettings.mode === 'fixed'" class="h-full bg-brand transition-[width] duration-300" :style="{ width: `${progress}%` }" />
       </div>
-    </header>
+    </PracticePageHeader>
 
     <main class="mx-auto flex min-h-[calc(100vh-80px)] max-w-[940px] flex-col px-4 py-6 sm:px-6 sm:py-10 lg:px-8 lg:py-12" :inert="phase === 'setup'" :aria-hidden="phase === 'setup'">
       <section v-if="phase === 'setup'" class="flex flex-1 flex-col opacity-70" aria-hidden="true">
@@ -516,7 +523,7 @@ onBeforeUnmount(() => {
 
         <div class="mt-5 flex flex-col items-center justify-center gap-2 text-xs font-bold text-muted sm:flex-row sm:gap-6">
           <p class="inline-flex items-center gap-2">
-            <svg viewBox="0 0 20 20" class="size-4 text-brand" aria-hidden="true"><path d="M4 6.5h12M4 10h12M4 13.5h12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><path d="m7 4-3 2.5L7 9m6 2 3 2.5-3 2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>选项按音阶顺序排列，位置保持不变
+            <svg viewBox="0 0 20 20" class="size-4 text-brand" aria-hidden="true"><path d="M4 6.5h12M4 10h12M4 13.5h12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" /><path d="m7 4-3 2.5L7 9m6 2 3 2.5-3 2.5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>{{ currentQuestion.direction === 'name-to-degree' ? '数字按音阶顺序排列' : '唱名每题打乱，本题内位置不变' }}
           </p>
           <p v-if="currentQuestion.direction === 'name-to-degree'" class="inline-flex items-center gap-2">
             <span class="grid size-5 place-items-center rounded-md border border-line bg-white text-[10px] text-ink">1</span>也可以连续按键盘数字 1–7

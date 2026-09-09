@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { createDirectionOrder } from '../solfegePractice.ts'
+import { allSolfegeNames, createDirectionOrder, createSolfegeOptionOrder } from '../solfegePractice.ts'
 
 function seeded(seed: number) {
   return () => {
@@ -35,5 +35,19 @@ test('direction order terminates with constant random sources and rejects invali
 
   for (const count of [-1, 1.5, Number.NaN]) {
     assert.throws(() => createDirectionOrder(count), RangeError)
+  }
+})
+
+test('solfege choices stay complete and avoid scale order and the previous question even with constant randomness', () => {
+  for (const random of [seeded(42), () => 0, () => 0.999999]) {
+    let previous = [...allSolfegeNames]
+    for (let question = 0; question < 100; question++) {
+      const order = createSolfegeOptionOrder(previous, random)
+      assert.deepEqual([...order].sort(), [...allSolfegeNames].sort())
+      assert.notDeepEqual(order, allSolfegeNames)
+      assert.notDeepEqual(order, [...allSolfegeNames].reverse())
+      assert.notDeepEqual(order, previous)
+      previous = order
+    }
   }
 })

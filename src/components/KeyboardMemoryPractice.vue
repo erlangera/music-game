@@ -4,6 +4,7 @@ import type { PianoKeyMark } from '@/domain/piano'
 import type { MidiNote } from '@/domain/pitch'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
+import PracticePageHeader from '@/components/PracticePageHeader.vue'
 import PracticeSetupDialog from '@/components/PracticeSetupDialog.vue'
 import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
 import { createHighlightPlayer, createKeyboardGenerator, isCorrectKey, namedPitch, pianoKeys, pianoKeyShortcuts } from '@/domain/keyboardPractice'
@@ -33,6 +34,7 @@ const correctCount = ref(0)
 const wrongCount = ref(0)
 const questionNumber = ref(0)
 const heading = ref<HTMLElement>()
+const practiceContent = ref<HTMLElement>()
 const nextButton = ref<HTMLButtonElement>()
 const { activeNotes, error: audioError, playNote, prepare: prepareAudio, status: audioStatus, stop, unlock: unlockAudio } = useInstrumentPlayer('piano')
 let generate = createKeyboardGenerator(active.value)
@@ -92,7 +94,10 @@ function clearTransition() {
 }
 
 function focusHeading() {
-  void nextTick(() => heading.value?.focus())
+  void nextTick(() => {
+    practiceContent.value?.scrollTo({ top: 0, behavior: 'instant' })
+    heading.value?.focus({ preventScroll: true })
+  })
 }
 
 function finish() {
@@ -181,7 +186,7 @@ function choose(note: NamedPitch) {
     answerState.value = 'wrong'
     player.stop()
     wrongCount.value++
-    void nextTick(() => nextButton.value?.focus())
+    void nextTick(() => nextButton.value?.focus({ preventScroll: true }))
   }
 }
 function chooseKey(midi: MidiNote) {
@@ -234,8 +239,8 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-canvas">
-    <header class="border-b border-line bg-white">
+  <div class="min-h-screen bg-canvas" :class="{ 'flex h-dvh min-h-0 flex-col overflow-hidden': phase === 'playing' }">
+    <PracticePageHeader>
       <div class="mx-auto grid min-h-20 max-w-7xl grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 sm:px-8">
         <button type="button" class="flex min-h-11 items-center gap-2 justify-self-start rounded-xl px-2 text-sm font-bold text-muted hover:bg-brand-soft" @click="leave">
           <span aria-hidden="true">‹</span>
@@ -255,9 +260,9 @@ onBeforeUnmount(() => {
       <div v-if="phase === 'playing' && active.mode === 'fixed'" class="h-1 bg-line" role="progressbar" aria-label="已完成题数" :aria-valuenow="answered" :aria-valuemin="0" :aria-valuemax="10">
         <div class="h-full bg-brand transition-all motion-reduce:transition-none" :style="{ width: `${answered * 10}%` }" />
       </div>
-    </header>
+    </PracticePageHeader>
 
-    <main class="mx-auto max-w-5xl px-3 py-8 sm:px-8 sm:py-14">
+    <main ref="practiceContent" class="mx-auto w-full max-w-5xl px-3 py-4 sm:p-6" :class="{ 'min-h-0 flex-1 overflow-y-auto': phase === 'playing' }">
       <section v-if="phase === 'setup'" class="rounded-3xl border border-line bg-white p-5 opacity-60 shadow-card sm:p-6">
         <div>
           <p class="text-xs font-extrabold tracking-widest text-brand">
@@ -275,19 +280,19 @@ onBeforeUnmount(() => {
         </div>
       </section>
 
-      <section v-else-if="phase === 'playing' && question" class="rounded-3xl border border-line bg-white px-3 py-7 shadow-card sm:px-10 sm:py-9">
+      <section v-else-if="phase === 'playing' && question" class="rounded-3xl border border-line bg-white px-3 py-4 shadow-card sm:px-6 sm:py-5">
         <div class="text-center">
           <p class="text-xs font-extrabold text-brand">
             {{ nameToKey ? '找到琴键' : '识别琴键' }}
           </p>
-          <h1 ref="heading" tabindex="-1" class="mt-2 text-xl font-black outline-none sm:text-3xl">
+          <h1 ref="heading" tabindex="-1" class="mt-2 text-xl font-black outline-none sm:text-2xl">
             {{ nameToKey ? isSequence ? '按顺序弹出这些音' : '找到这个音' : isSequence ? '按顺序识别琴键' : '这个琴键是什么音？' }}
           </h1>
           <p class="mt-3 text-xs text-muted sm:text-sm">
             {{ nameToKey ? '依次点击对应琴键' : isSequence ? '按题目顺序选择音名，高亮每秒自动前进' : '选择高亮琴键对应的音名' }}
           </p>
         </div>
-        <ol class="my-6 grid gap-2" :class="isSequence ? 'grid-cols-4 sm:grid-cols-6' : 'mx-auto max-w-40 grid-cols-1'" aria-label="题目序列">
+        <ol class="my-4 grid gap-2" :class="isSequence ? 'grid-cols-4 sm:grid-cols-6' : 'mx-auto max-w-40 grid-cols-1'" aria-label="题目序列">
           <li v-for="(item, index) in question.sequence" :key="index" class="flex min-h-16 flex-col items-center justify-center rounded-xl border-2 px-1 text-lg font-extrabold" :class="index < answerIndex ? 'border-brand/30 bg-brand-soft text-brand-dark' : locked && index === answerIndex ? 'border-error bg-error-soft text-error' : index === answerIndex ? 'border-brand text-ink' : 'border-line text-muted'" :aria-current="index === answerIndex ? 'step' : undefined">
             <span class="text-[10px] font-medium">{{ index + 1 }}{{ !nameToKey && displayIndex === index ? ' · 展示中' : index === answerIndex && !locked ? ' · 待答' : '' }}</span>
             <span>{{ nameToKey || index < answerIndex || locked ? item.label : '?' }}<span v-if="index < answerIndex" aria-hidden="true"> ✓</span></span>
@@ -301,11 +306,12 @@ onBeforeUnmount(() => {
           </button>
         </div>
         <PianoKeyboard
-          :key="`${questionNumber}-${displayRun}`" :interactive="nameToKey && !locked"
+          :key="`${questionNumber}-${displayRun}`"
+          compact :interactive="nameToKey && !locked"
           :marks="keyboardMarks" :shortcuts="pianoKeyShortcuts"
           @select="chooseKey"
         />
-        <div class="my-5 min-h-36 sm:min-h-24">
+        <div class="mt-4">
           <div v-if="!nameToKey" class="grid grid-cols-4 gap-2 sm:grid-cols-6 sm:gap-3" role="group" aria-label="选择音名">
             <button v-for="note in question.options" :key="note.pitch" type="button" class="min-h-14 rounded-xl border-2 text-lg font-black transition-colors" :class="locked && note.pitch === currentItem?.pitch ? 'border-brand bg-brand-soft text-brand-dark' : locked && !wasCorrect && note.pitch === selected?.pitch ? 'border-error bg-error-soft text-error' : 'border-line hover:border-brand hover:bg-brand-soft'" :disabled="locked" :aria-label="`选择音名 ${note.label}`" @click="choose(note)">
               <span v-if="locked && (note.pitch === currentItem?.pitch || (!wasCorrect && note.pitch === selected?.pitch))" class="mr-1" aria-hidden="true">{{ note.pitch === currentItem?.pitch ? '✓' : '×' }}</span>{{ note.label }}
@@ -314,21 +320,6 @@ onBeforeUnmount(() => {
           <p class="mt-3 hidden text-center text-xs text-muted sm:block">
             {{ nameToKey ? '白键 A S D F G H J · 黑键 W E T Y U（从左到右）' : '用 Tab 选择音名按钮，Enter 或空格提交' }}
           </p>
-        </div>
-        <div class="min-h-24" aria-live="polite" aria-atomic="true">
-          <div v-if="locked" class="flex flex-wrap items-center justify-between gap-4 rounded-xl border p-4" :class="wasCorrect ? 'border-brand/20 bg-brand-soft' : 'border-error/20 bg-error-soft'">
-            <div>
-              <p class="text-sm font-extrabold" :class="wasCorrect ? 'text-brand-dark' : 'text-error'">
-                {{ wasCorrect ? `✓ ${isSequence ? '序列全部正确！' : `答对了！这是 ${currentItem?.label}`}` : `× 第 ${answerIndex + 1} 项：你选择了 ${selected?.label}，正确答案：${currentItem?.label}` }}
-              </p>
-              <p class="mt-1 text-xs text-muted">
-                {{ wasCorrect ? lastQuestion ? '即将查看本轮结果' : '即将进入下一题' : '记住正确琴键的位置，再继续练习。' }}
-              </p>
-            </div>
-            <button v-if="!wasCorrect" ref="nextButton" type="button" class="min-h-11 w-full rounded-xl bg-brand px-5 text-sm font-bold text-white hover:bg-brand-dark sm:w-auto" @click="advance">
-              {{ lastQuestion ? '查看结果 →' : '下一题 →' }}
-            </button>
-          </div>
         </div>
         <p v-if="playingAudioMessage" class="mt-3 text-xs/5 text-muted" role="status">
           {{ playingAudioMessage }}
@@ -368,6 +359,21 @@ onBeforeUnmount(() => {
         </button>
       </section>
     </main>
+    <div v-if="phase === 'playing' && locked" class="safe-bottom shrink-0 border-t border-line bg-white px-3 pt-3 shadow-card sm:px-6" aria-live="polite" aria-atomic="true">
+      <div class="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 rounded-xl border p-4" :class="wasCorrect ? 'border-brand/20 bg-brand-soft' : 'border-error/20 bg-error-soft'">
+        <div>
+          <p class="text-sm font-extrabold" :class="wasCorrect ? 'text-brand-dark' : 'text-error'">
+            {{ wasCorrect ? `✓ ${isSequence ? '序列全部正确！' : `答对了！这是 ${currentItem?.label}`}` : `× 第 ${answerIndex + 1} 项：你选择了 ${selected?.label}，正确答案：${currentItem?.label}` }}
+          </p>
+          <p class="mt-1 text-xs text-muted">
+            {{ wasCorrect ? lastQuestion ? '即将查看本轮结果' : '即将进入下一题' : '记住正确琴键的位置，再继续练习。' }}
+          </p>
+        </div>
+        <button v-if="!wasCorrect" ref="nextButton" type="button" class="min-h-11 w-full rounded-xl bg-brand px-5 text-sm font-bold text-white hover:bg-brand-dark sm:w-auto" @click="advance">
+          {{ lastQuestion ? '查看结果 →' : '下一题 →' }}
+        </button>
+      </div>
+    </div>
 
     <PracticeSetupDialog v-if="phase === 'setup'" title="开始钢琴键位训练" description="选择训练方向、题目数量和序列长度" cancel-label="返回首页" @start="begin()" @cancel="leave">
       <fieldset>
