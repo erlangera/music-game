@@ -22,6 +22,12 @@ const router = createRouter({
       meta: { title: '钢琴键位训练 · 音阶阶' },
     },
     {
+      path: '/c-major',
+      name: 'c-major',
+      component: () => import('@/views/CmajorPracticeView.vue'),
+      meta: { title: '简谱与琴键 · 音阶阶' },
+    },
+    {
       path: '/scales/learn',
       name: 'scale-learn',
       component: () => import('@/views/MajorScaleLearnView.vue'),

@@ -13,6 +13,10 @@ Browser
        -> src/router/index.ts (hash history)
        -> src/App.vue (RouterView)
             -> src/views/HomeView.vue
+            -> src/views/CmajorPracticeView.vue
+                 -> src/components/CmajorPractice.vue
+                 -> src/domain/cMajorPractice.ts
+                 -> shared PianoKeyboard / useInstrumentPlayer / createHighlightPlayer
             -> src/views/KeyboardPracticeView.vue
                  -> src/components/KeyboardMemoryPractice.vue
                       -> src/components/PianoKeyboard.vue
@@ -72,7 +76,7 @@ Browser
 
 ## Current Constraints
 
-- 当前真实路由为首页 `/`、唱名训练 `/solfege`、钢琴键位 `/keyboard`、自然大调学习/练习 `/scales/learn` 与 `/scales/practice`、相对音高模块 `/ear`（含学习、练习目录、主音感和核心音级听辨）及自由钢琴工具 `/tools/piano`；其他导航入口仍是规划占位。
+- 当前真实路由为首页 `/`、唱名训练 `/solfege`、钢琴键位 `/keyboard`、C 大调简谱与琴键 `/c-major`、自然大调学习/练习 `/scales/learn` 与 `/scales/practice`、相对音高模块 `/ear`（含学习、练习目录、主音感和核心音级听辨）及自由钢琴工具 `/tools/piano`；其他导航入口仍是规划占位。
 - 唱名 S1–S4 的核心文字交互已拆为独立组件，并把题型与受控生成提取到纯 TypeScript 领域模块；逐项答题记录、随机题复现和错题回顾尚未实现，其他训练模块也尚无共享训练引擎。
 - 仓库中保留 Vue starter components，但当前入口没有引用它们。
 - 钢琴领域有 Node 原生确定性单元测试，覆盖生成/判分/展示控制器、MIDI note 转换和采样音域覆盖；`npm run check` 覆盖 lint、类型检查、生产构建和 `npm test`，尚无浏览器 E2E。

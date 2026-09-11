@@ -32,6 +32,7 @@ npm run preview
 - `src/views/`：首页与训练页的页面级编排。
 - `src/components/SolfegeMemoryPractice.vue`：模块一训练设置、双向单项/序列交互、即时反馈和本轮汇总。
 - `src/domain/solfegePractice.ts`：模块一领域类型、平衡出题、方向队列和唱名/简谱映射。
+- `src/components/CmajorPractice.vue`、`src/domain/cMajorPractice.ts`：阶段三固定 C 大调简谱与琴键双向单音/序列、反馈和单轮结果。
 - `src/components/KeyboardMemoryPractice.vue`、`PianoKeyboard.vue`：钢琴训练会话、反馈和虚拟琴键。
 - `src/domain/pitch.ts`、`src/domain/piano.ts`、`src/domain/keyboardPractice.ts`、`src/domain/__tests__/`：音高/MIDI 类型、通用钢琴模型、训练生成、判分与确定性测试。
 - `src/views/tools/`、`src/tools/catalog.ts`：不计分的音乐工具页和可扩展工具目录；当前包含自由钢琴。

@@ -56,9 +56,9 @@ const stages: Stage[] = [
   {
     step: '03',
     title: 'C 大调综合映射',
-    description: '把唱名、音名与键位连接起来',
+    description: '固定 C 大调，连接 1–7 与七个白键',
     progress: 0,
-    lessons: '共 5 课',
+    lessons: '双向练习 · 单音 / 序列',
     tone: 'blue',
     status: 'ready',
   },
@@ -117,6 +117,11 @@ function startSolfegePractice() {
 }
 
 function handleStageAction(stage: Stage) {
+  if (stage.step === '03') {
+    void router.push({ name: 'c-major' })
+    return
+  }
+
   if (stage.step === '05') {
     void router.push({ name: 'relative-pitch-home' })
     return
@@ -335,7 +340,7 @@ function handleStageAction(stage: Stage) {
                     </RouterLink>
                   </div>
                   <button v-else-if="stage.status !== 'locked'" type="button" class="mt-4 min-h-11 w-full rounded-xl border border-line text-xs font-extrabold transition-colors hover:border-brand/30 hover:bg-brand-soft hover:text-brand-dark" @click="handleStageAction(stage)">
-                    {{ stage.status === 'ready' ? '开始学习' : '继续学习' }}
+                    {{ stage.step === '03' ? '开始练习' : stage.status === 'ready' ? '开始学习' : '继续学习' }}
                   </button>
                 </article>
               </div>
