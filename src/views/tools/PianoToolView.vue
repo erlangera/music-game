@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { defaultInstrumentVolume } from '@/audio/instrumentAudio'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
 import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
 import { pianoKeys, pianoKeyShortcuts } from '@/domain/piano'
 
 const { activeNotes, error, prepare, pressNote, releaseNote, setVolume, status, stop } = useInstrumentPlayer('piano')
 const keyMarks = computed(() => activeNotes.value.map(midi => ({ midi, state: 'active' as const })))
-const volume = ref(72)
+const volume = ref(defaultInstrumentVolume * 100)
 
 const statusText = computed(() => ({
   idle: '等待加载',

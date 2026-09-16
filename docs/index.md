@@ -19,7 +19,8 @@
 ## Canonical Sources
 
 - 运行时事实：源码、`package.json`、TypeScript/Vite 配置和 CI。
-- 产品意图：[`music-theory-ear-training-prd-v1.md`](music-theory-ear-training-prd-v1.md)。
+- 产品意图：[`music-theory-ear-training-prd-v1.md`](music-theory-ear-training-prd-v1.md) 为完整 MVP 目标；当前交付切片与已接受调整见 [`product/index.md`](product/index.md) 及各模块文档。
+- 本次基线审查：[`quality/2026-09-12-project-audit.md`](quality/2026-09-12-project-audit.md)。
 - 工作方式：根目录 [`AGENTS.md`](../AGENTS.md)。
 - 决策原因：`docs/decisions/` 中已接受的记录。
 - 临时任务状态：`docs/exec-plans/active/`，完成后归档。

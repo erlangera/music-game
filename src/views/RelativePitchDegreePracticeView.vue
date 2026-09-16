@@ -14,7 +14,7 @@ import {
 } from '@/domain/relativePitch'
 
 type Phase = 'setup' | 'playing' | 'complete'
-type AnswerState = 'listening' | 'answering' | 'correct' | 'wrong'
+type AnswerState = 'listening' | 'audio-error' | 'answering' | 'correct' | 'wrong'
 
 const degreeCopy: Record<CoreScaleDegree, { name: string, role: string }> = {
   1: { name: 'do', role: '主音 · 稳定与归属' },
@@ -81,6 +81,11 @@ function playCurrentQuestion() {
     onComplete: () => {
       if (!locked.value && question.value?.id === current.id) {
         answerState.value = 'answering'
+      }
+    },
+    onUnavailable: () => {
+      if (!locked.value && question.value?.id === current.id) {
+        answerState.value = 'audio-error'
       }
     },
   })
@@ -207,16 +212,16 @@ onMounted(() => void prepare())
       <section v-else-if="phase === 'playing' && question" class="rounded-3xl border border-line bg-white px-3 py-7 shadow-card sm:p-9">
         <div class="text-center">
           <p class="text-xs font-extrabold tracking-widest text-brand">
-            {{ question.scale.id }} MAJOR · {{ tonalHintLabels[activeHint] }}
+            {{ locked ? `${question.scale.id} MAJOR · ` : '' }}{{ tonalHintLabels[activeHint] }}
           </p>
           <h1 ref="heading" tabindex="-1" class="mt-3 text-2xl font-black outline-none sm:text-3xl">
             目标音是几级？
           </h1>
           <p class="mt-3 text-xs/5 text-muted sm:text-sm">
-            {{ answerState === 'listening' ? '先听完调性提示和最后一个目标音' : locked ? '答案已揭晓，再听 1 到目标音的关系' : '保留脑中的主音参照，选择 1、3 或 5' }}
+            {{ answerState === 'audio-error' ? '未能播放题目，请启用声音后重试' : answerState === 'listening' ? '先听完调性提示和最后一个目标音' : locked ? '答案已揭晓，再听 1 到目标音的关系' : '保留脑中的主音参照，选择 1、3 或 5' }}
           </p>
           <button type="button" class="mt-5 min-h-11 rounded-xl border border-line px-5 text-sm font-extrabold hover:bg-brand-soft disabled:opacity-45" :disabled="locked" @click="playCurrentQuestion">
-            {{ isPlaying ? '↻ 从头重播' : '▶ 重播题目' }}
+            {{ answerState === 'audio-error' ? '启用声音并重试' : isPlaying ? '↻ 从头重播' : '▶ 重播题目' }}
           </button>
         </div>
 

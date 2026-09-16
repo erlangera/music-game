@@ -32,6 +32,13 @@ index.html
                                 -> /src/audio/tonePianoAudio.ts
                                      -> Tone.Sampler / Tone.PolySynth
                                 -> /public/audio/piano/salamander/
+                 -> /src/views/CmajorPracticeView.vue
+                      -> /src/components/CmajorPractice.vue
+                      -> /src/domain/cMajorPractice.ts
+                 -> /src/views/MajorScaleLearnView.vue
+                 -> /src/views/MajorScalePracticeView.vue
+                      -> /src/components/MajorScalePractice.vue
+                      -> /src/domain/majorScale.ts
                  -> /src/views/RelativePitchHomeView.vue
                  -> /src/views/RelativePitchLearnView.vue
                       -> /src/domain/relativePitch.ts
@@ -53,7 +60,7 @@ index.html
 
 ## Source Responsibilities
 
-钢琴训练、自然大调和自由钢琴都使用 `PianoKeyboard.vue`；组件根据 MIDI 起止音生成一或多个八度，通过 mark 输入统一 `member/active/correct/wrong` 状态，只发出 MIDI note 事件。琴键几何、音名、快捷键和状态优先级位于不含 Vue 的 `piano.ts`。`main.ts` 把钢琴注册到应用级乐器注册表，`useInstrumentPlayer.ts` 按 id 注入乐器并统一预加载、解锁、单音、持续按键、活动高亮和可取消序列。`instrumentAudio.ts` 是平台无关的声音契约，`tonePianoAudio.ts` 只管理钢琴采样、音量、释放和合成降级。训练模块仍各自持有题目、判分和会话状态，没有抽象通用计分引擎。
+钢琴训练、自然大调和自由钢琴都使用 `PianoKeyboard.vue`；组件根据 MIDI 起止音生成一或多个八度，通过 mark 输入统一 `member/active/correct/wrong` 状态，只发出 MIDI note 事件。琴键几何、音名、快捷键和状态优先级位于不含 Vue 的 `piano.ts`。`main.ts` 把钢琴注册到应用级乐器注册表，`useInstrumentPlayer.ts` 按 id 注入乐器并绑定卸载清理；`audio/instrumentPlayer.ts` 提供可注入假音源测试的响应式控制器，管理预加载、解锁、单音、持续按键、活动高亮和可取消序列。`instrumentAudio.ts` 是平台无关的声音契约，`tonePianoAudio.ts` 只管理钢琴采样、音量、释放和合成降级。训练模块仍各自持有题目、判分和会话状态，没有抽象通用计分引擎。
 
 | 路径 | 当前职责 | 备注 |
 | --- | --- | --- |
@@ -65,6 +72,8 @@ index.html
 | `src/tools/catalog.ts` | 已上线工具的发现元数据 | 可供未来工具中心和导航复用，不承载运行状态 |
 | `src/views/SolfegePracticeView.vue` | 唱名训练页编排和返回首页导航 | 训练路由 `/solfege` |
 | `src/views/RelativePitch*View.vue` | 相对音高入口、学习、四类练习目录、十二调主音感与 `1/3/5` 音级听辨 | 当前不评分、不保存错题；音级关系与旋律听写仍是占位 |
+| `src/views/CmajorPracticeView.vue`、`src/components/CmajorPractice.vue`、`src/domain/cMajorPractice.ts` | 固定 C 大调简谱与琴键双向单音/序列 | `/c-major`，当次会话汇总 |
+| `src/views/MajorScale*View.vue`、`src/components/MajorScalePractice.vue`、`src/domain/majorScale.ts` | 十三课自然大调学习和四类练习 | `/scales/learn`、`/scales/practice` |
 | `src/domain/relativePitch.ts` | 十二调主音与核心音级题目、四种调性提示、音频步骤、判定和精选短音型清单 | 不依赖 Vue/Tone；主音作答范围 C4–B4，音级使用各调低八度音阶音 |
 | `src/components/SolfegeMemoryPractice.vue` | 唱名 S1–S4 核心设置、单项/序列交互、会话与汇总 | 状态仅在组件内存中，退出或刷新后不保留 |
 | `src/domain/solfegePractice.ts` | 唱名类型、平衡牌组、方向队列和题目映射 | 不依赖 Vue，可传入随机函数 |
@@ -72,7 +81,8 @@ index.html
 | `src/domain/piano.ts` | 任意 MIDI 范围的琴键几何、音名、快捷键、mark 类型和状态优先级 | 同时供工具、键位训练和大调模块使用，不含题目或判分 |
 | `src/audio/` | 通用乐器契约与注册表、钢琴定义、采样清单和 Tone.js 适配器 | 共享实例跨路由复用已解码采样；页面卸载只停止，不销毁缓存 |
 | `src/composables/instrumentInjection.ts` | 把乐器注册表注入 Vue 应用并按稳定 id 解析乐器 | 新乐器通过注册定义接入，不要求练习导入具体声音实现 |
-| `src/composables/useInstrumentPlayer.ts` | 统一声音状态、生命周期、活动音符、持续按键、可取消序列和单音/和弦时间线 | 视觉组件只消费 active notes，不依赖 Tone.js |
+| `src/composables/useInstrumentPlayer.ts` | 注入乐器、创建控制器、绑定卸载 dispose | 视觉组件不依赖 Tone.js |
+| `src/audio/instrumentPlayer.ts` | 响应式声音状态、活动音符、持续按键、可取消序列和单音/和弦时间线 | 解锁失败只调用 onUnavailable；取消不触发完成；修改过音量的控制器卸载时恢复默认 72% |
 | `src/assets/main.css` | Tailwind 入口、设计 token、全局基线 | 当前实际被 `main.ts` 导入 |
 | `src/assets/base.css` | Vue starter 遗留样式 | 当前未被入口导入 |
 | `src/components/` | 可复用或可独立表达的交互组件 | 当前包含唱名记忆训练；目录中仍保留未引用的 Vue starter 示例 |
@@ -83,7 +93,7 @@ index.html
 
 唱名设置页是所有练习设置入口的项目参考标准，新增模块也须遵循；完整约定见 [Practice Setup Standard](frontend.md#practice-setup-standard)。
 
-五个训练入口（唱名、钢琴、自然大调、主音感、核心音级听辨）使用 `PracticeSetupDialog.vue`。共享层只负责原生模态 dialog、标题与说明、固定头部/底部、内部滚动、初始焦点、Escape 取消和背景滚动锁定；通过默认 slot 接收设置项，通过 start/cancel 事件交回会话组件。设置值、音频准备、开始/返回路径和训练状态仍由各模块管理。
+六个训练入口（唱名、钢琴、C 大调简谱与琴键、自然大调、主音感、核心音级听辨）使用 `PracticeSetupDialog.vue`。共享层只负责原生模态 dialog、标题与说明、固定头部/底部、内部滚动、初始焦点、Escape 取消和背景滚动锁定；通过默认 slot 接收设置项，通过 start/cancel 事件交回会话组件。设置值、音频准备、开始/返回路径和训练状态仍由各模块管理。
 
 ## Build and Delivery
 

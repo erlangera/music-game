@@ -2,7 +2,7 @@
 
 ## 统一设置弹窗
 
-训练设置使用共享 `PracticeSetupDialog.vue`，沿用唱名练习的圆角卡片、绿色选中态和遮罩风格。标题、说明和关闭按钮固定在顶部，返回/开始按钮固定在底部，仅中间设置项滚动；适配 320px 窄屏。弹窗打开时背景不可交互，焦点进入标题，Escape 与关闭按钮沿用模块返回路径。原有选项、默认值与重新设置行为不变。
+复用 `PracticeSetupDialog.vue`，遵循 [练习设置统一标准](../architecture/frontend.md#practice-setup-standard)：固定头部与底部、仅中间滚动、模态焦点与背景锁定。选项、默认值和返回行为由本模块管理，见下文。
 
 ## Current Scope
 

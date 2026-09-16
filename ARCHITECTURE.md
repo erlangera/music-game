@@ -29,7 +29,7 @@ Browser
                                 -> Tone.Sampler + self-hosted Salamander samples
                            -> Tone.PolySynth fallback
             -> src/views/MajorScaleLearnView.vue
-                 -> src/components/PianoKeyboard.vue (C4–B5 range)
+                 -> src/components/PianoKeyboard.vue (focused scale / C4–B5 range)
                  -> src/domain/majorScale.ts
                  -> src/composables/useInstrumentPlayer.ts
             -> src/views/MajorScalePracticeView.vue
@@ -71,7 +71,7 @@ Browser
 - 构建：Vite，生产资源输出到 `dist/`。
 - 发布：GitHub Actions -> GitHub Pages，公共路径为 `/music-game/`。
 - 数据：唱名、钢琴、自然大调和相对音高领域数据、生成和判定位于 `src/domain/`，`pitchClass` 与具体 `midiNote` 分开建模；设置、会话和汇总仅在内存，逐项记录、本地存储、错题复盘和 MIDI 输入尚未实现。
-- 音频：唱名继续由 HTML Audio composable 管理；可演奏乐器注册到应用级 `InstrumentRegistry`，共享平台无关的 `InstrumentAudioEngine` 契约和 `useInstrumentPlayer` 交互控制器。当前钢琴使用共享 Tone.js 适配器、自托管 Salamander 稀疏采样和 PolySynth 降级，支持定长音符、复音按下/松开、活动高亮、可取消序列及相对音高所需的可取消单音/和弦时间线。
+- 音频：唱名继续由 HTML Audio composable 管理；可演奏乐器注册到应用级 `InstrumentRegistry`，共享平台无关的 `InstrumentAudioEngine` 契约和 `audio/instrumentPlayer.ts` 响应式交互控制器；`useInstrumentPlayer` 负责注入与卸载清理。时间线解锁失败不发出完成回调，自由钢琴页面卸载恢复默认音量 72%。当前钢琴使用共享 Tone.js 适配器、自托管 Salamander 稀疏采样和 PolySynth 降级，支持定长音符、复音按下/松开、活动高亮、可取消序列及相对音高所需的可取消单音/和弦时间线。
 - 工具：`/tools/:tool` 与训练路由分离，工具不出题、不判分、不写入训练记录；`src/tools/catalog.ts` 是导航发现信息，页面仍按路由懒加载。
 
 ## Current Constraints
@@ -81,7 +81,7 @@ Browser
 - 仓库中保留 Vue starter components，但当前入口没有引用它们。
 - 钢琴领域有 Node 原生确定性单元测试，覆盖生成/判分/展示控制器、MIDI note 转换和采样音域覆盖；`npm run check` 覆盖 lint、类型检查、生产构建和 `npm test`，尚无浏览器 E2E。
 - 自然大调领域以 pitch class 计算、按调性保存拼写，并用具体 MIDI note 表示低八度起始的八音序列；课程、训练和自由钢琴共享同一个可配置 MIDI 范围的 `PianoKeyboard.vue`、统一高亮状态和注入的钢琴声音。
-- 当前实现覆盖首页、模块一核心交互和模块二双向键位训练（含序列），不能据此推断完整训练引擎、记录或解锁闭环已存在。
+- 当前实现范围以产品状态矩阵为入口，包含唱名、键位、C 大调映射、自然大调、主音感、核心音级听辨及自由钢琴；不能据此推断完整训练引擎、记录或解锁闭环已存在。
 
 ## Detailed Knowledge
 

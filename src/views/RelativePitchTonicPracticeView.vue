@@ -19,7 +19,7 @@ import {
 } from '@/domain/relativePitch'
 
 type Phase = 'setup' | 'playing' | 'complete'
-type AnswerState = 'listening' | 'answering' | 'correct' | 'wrong'
+type AnswerState = 'listening' | 'audio-error' | 'answering' | 'correct' | 'wrong'
 
 const route = useRoute()
 const router = useRouter()
@@ -52,7 +52,7 @@ const wasCorrect = computed(() => answerState.value === 'correct')
 const lastQuestion = computed(() => activeMode.value === 'fixed' && answered.value >= 10)
 const keyboardMarks = computed<PianoKeyMark[]>(() => {
   const current = question.value
-  const marks: PianoKeyMark[] = activeNotes.value.map(midi => ({ midi, state: 'active' }))
+  const marks: PianoKeyMark[] = locked.value ? activeNotes.value.map(midi => ({ midi, state: 'active' })) : []
   if (!current || !locked.value || current.type !== 'piano') {
     return marks
   }
@@ -97,6 +97,11 @@ function playCurrentQuestion() {
     onComplete: () => {
       if (!locked.value && question.value?.id === current.id) {
         answerState.value = 'answering'
+      }
+    },
+    onUnavailable: () => {
+      if (!locked.value && question.value?.id === current.id) {
+        answerState.value = 'audio-error'
       }
     },
   })
@@ -239,16 +244,16 @@ onMounted(() => void prepare())
       <section v-else-if="phase === 'playing' && question" class="rounded-3xl border border-line bg-white px-3 py-7 shadow-card sm:p-9">
         <div class="text-center">
           <p class="text-xs font-extrabold tracking-widest text-brand">
-            {{ question.scale.id }} MAJOR · {{ tonalHintLabels[activeHint] }}
+            {{ locked ? `${question.scale.id} MAJOR · ` : '' }}{{ tonalHintLabels[activeHint] }}
           </p>
           <h1 ref="heading" tabindex="-1" class="mt-3 text-2xl font-black outline-none sm:text-3xl">
             {{ question.type === 'choice' ? '哪一个音听起来像“回家”？' : '请在钢琴上找到主音 1' }}
           </h1>
           <p class="mt-3 text-xs/5 text-muted sm:text-sm">
-            {{ answerState === 'listening' ? '先听完调性提示和题目' : question.type === 'choice' ? '按播放顺序选择第一个音 A 或第二个音 B' : '保持脑中的主音感觉，再点击对应琴键' }}
+            {{ answerState === 'audio-error' ? '未能播放题目，请启用声音后重试' : answerState === 'listening' ? '先听完调性提示和题目' : question.type === 'choice' ? '按播放顺序选择第一个音 A 或第二个音 B' : '保持脑中的主音感觉，再点击对应琴键' }}
           </p>
           <button type="button" class="mt-5 min-h-11 rounded-xl border border-line px-5 text-sm font-extrabold hover:bg-brand-soft disabled:opacity-45" :disabled="locked" @click="playCurrentQuestion">
-            {{ isPlaying ? '↻ 从头重播' : '▶ 重播题目' }}
+            {{ answerState === 'audio-error' ? '启用声音并重试' : isPlaying ? '↻ 从头重播' : '▶ 重播题目' }}
           </button>
         </div>
 
@@ -261,7 +266,7 @@ onMounted(() => void prepare())
 
         <div v-else class="mx-auto mt-8 max-w-4xl">
           <div class="overflow-x-auto rounded-2xl border border-line bg-canvas p-3" tabindex="0" aria-label="从 C4 到 B4 的主音钢琴">
-            <PianoKeyboard compact :depressed-notes="activeNotes" :from="tonicKeyboardFrom" :interactive="answerState === 'answering'" :marks="keyboardMarks" :to="tonicKeyboardTo" @select="choosePiano" />
+            <PianoKeyboard compact :depressed-notes="locked ? activeNotes : []" :from="tonicKeyboardFrom" :interactive="answerState === 'answering'" :marks="keyboardMarks" :to="tonicKeyboardTo" @select="choosePiano" />
           </div>
           <p class="mt-3 text-center text-xs text-muted">
             琴键标签在作答前隐藏；答题后只标出主音 1。

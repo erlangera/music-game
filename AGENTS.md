@@ -5,7 +5,7 @@
 ## Project Snapshot
 
 - 产品：面向中文简谱初学者的音高与乐理训练 Web 应用，工作名“音阶阶”。
-- 当前阶段：首页/学习路径原型、模块一 S1–S4 核心交互和钢琴十二音双向单音/序列；已支持单项/序列、固定 10 题/无限练习，但完整记录、复盘和解锁闭环仍以 PRD 为规划目标。
+- 当前阶段：首页/学习路径原型、唱名文字/默写、十二音键位、C 大调简谱与琴键、十二个自然大调学习/练习、主音感与核心音级听辨、自由钢琴；成绩仅在当次会话中保留，完整记录、复盘和解锁闭环仍为规划。
 - 技术栈：Vue 3、Vue Router、TypeScript、Vite、Tailwind CSS 4、Tone.js。
 - 包管理：npm，锁文件为 `package-lock.json`。
 - 部署：GitHub Actions 构建并发布到 GitHub Pages，站点 base path 为 `/music-game/`。
@@ -22,7 +22,7 @@ npm run build
 npm run preview
 ```
 
-`npm run lint` 使用 Antfu preset 检查 Vue、TypeScript 和仓库配置，并通过 `eslint-plugin-better-tailwindcss` 校验 Vue 模板中的 Tailwind CSS 4 class。`npm run check` 执行 lint、`vue-tsc --build`、Vite 生产构建和 `npm test`，是当前最低验证门槛。`npm test` 使用 Node 原生测试器验证钢琴领域规则；尚无组件测试和浏览器 E2E。
+`npm run lint` 使用 Antfu preset 检查 Vue、TypeScript 和仓库配置，并通过 `eslint-plugin-better-tailwindcss` 校验 Vue 模板中的 Tailwind CSS 4 class。`npm run check` 执行 lint、`vue-tsc --build`、Vite 生产构建和 `npm test`，是当前最低验证门槛。`npm test` 使用 Node 原生测试器验证唱名、钢琴、C 大调、自然大调、相对音高及乐器注册表规则；尚无组件测试和浏览器 E2E。
 
 ## Repository Map
 
@@ -36,7 +36,9 @@ npm run preview
 - `src/components/KeyboardMemoryPractice.vue`、`PianoKeyboard.vue`：钢琴训练会话、反馈和虚拟琴键。
 - `src/domain/pitch.ts`、`src/domain/piano.ts`、`src/domain/keyboardPractice.ts`、`src/domain/__tests__/`：音高/MIDI 类型、通用钢琴模型、训练生成、判分与确定性测试。
 - `src/views/tools/`、`src/tools/catalog.ts`：不计分的音乐工具页和可扩展工具目录；当前包含自由钢琴。
-- `src/audio/`、`src/composables/usePianoAudio.ts`：通用乐器声音契约、Tone.js 钢琴采样/合成降级实现和 Vue 状态包装。
+- `src/views/MajorScale*View.vue`、`src/domain/majorScale.ts`：十三课自然大调学习和四类练习。
+- `src/views/RelativePitch*View.vue`、`src/domain/relativePitch.ts`：相对音高入口、学习、主音感及核心音级听辨。
+- `src/audio/`、`src/composables/useInstrumentPlayer.ts`：通用乐器声音契约、Tone.js 钢琴采样/合成降级实现和 Vue 状态包装。
 - `src/assets/main.css`：Tailwind 入口、设计 token 和全局基础样式。
 - `public/`：不经打包处理的唱名与自托管 Salamander 钢琴采样等静态资源。
 - `docs/`：项目长期知识；入口见 `docs/index.md`。

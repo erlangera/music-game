@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { majorScaleIds, majorScales, scaleMidiNotes } from '../majorScale.ts'
+import { midiNote } from '../pitch.ts'
 import {
   coreScaleDegrees,
   createDegreeQuestionGenerator,
@@ -32,14 +33,21 @@ test('tonic generator covers all twelve keys before reusing a key', () => {
   assert.ok(questions.every(question => question.tonicMidi >= 60 && question.tonicMidi <= 71))
 })
 
-test('tonic exercises and distractors use balanced shuffle bags', () => {
-  const next = createTonicQuestionGenerator(seeded(8))
-  const questions = Array.from({ length: 6 }, next)
-  assert.deepEqual(new Set(questions.slice(0, 2).map(question => question.type)), new Set(['choice', 'piano']))
-  assert.deepEqual(new Set(questions.map(question => question.distractorDegree)), new Set([2, 3, 4, 5, 6, 7]))
-  for (const question of questions) {
-    assert.equal(question.candidateMidi.filter(note => note === question.tonicMidi).length, 1)
-    assert.notEqual(question.candidateMidi[0], question.candidateMidi[1])
+test('each six presented choice distractors cover 2–7 without piano consuming the bag', () => {
+  for (const random of [seeded(1), seeded(8), seeded(29), () => 0]) {
+    const next = createTonicQuestionGenerator(random)
+    const questions = Array.from({ length: 48 }, next)
+    for (let index = 0; index < questions.length; index += 2) {
+      assert.deepEqual(new Set(questions.slice(index, index + 2).map(question => question.type)), new Set(['choice', 'piano']))
+    }
+    const choices = questions.filter(question => question.type === 'choice')
+    for (let index = 0; index < choices.length; index += 6) {
+      assert.deepEqual(new Set(choices.slice(index, index + 6).map(question => question.distractorDegree)), new Set([2, 3, 4, 5, 6, 7]))
+    }
+    for (const question of choices) {
+      assert.equal(question.candidateMidi.filter(note => note === question.tonicMidi).length, 1)
+      assert.notEqual(question.candidateMidi[0], question.candidateMidi[1])
+    }
   }
 })
 
@@ -70,7 +78,7 @@ test('choice and piano answers only accept the generated tonic target', () => {
   assert.ok(isTonicChoiceAnswer(choice, choice.correctCandidateIndex))
   assert.ok(!isTonicChoiceAnswer(choice, choice.correctCandidateIndex === 0 ? 1 : 0))
   assert.ok(isTonicPianoAnswer(piano, piano.tonicMidi))
-  assert.ok(!isTonicPianoAnswer(piano, piano.candidateMidi[piano.correctCandidateIndex === 0 ? 1 : 0]))
+  assert.ok(!isTonicPianoAnswer(piano, midiNote(piano.tonicMidi + 1)))
 })
 
 test('four hints build distinct, deterministic tonal contexts', () => {

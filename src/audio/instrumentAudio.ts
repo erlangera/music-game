@@ -1,5 +1,7 @@
 import type { MidiNote } from '@/domain/pitch'
 
+export const defaultInstrumentVolume = 0.72
+
 export type InstrumentAudioStatus = 'idle' | 'loading' | 'ready' | 'fallback' | 'unavailable'
 
 export interface InstrumentAudioState {

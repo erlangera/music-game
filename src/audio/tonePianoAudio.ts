@@ -1,6 +1,7 @@
 import type { InstrumentAudioEngine, InstrumentAudioState, InstrumentAudioStatus, PlayNoteOptions } from '@/audio/instrumentAudio'
 import type { MidiNote } from '@/domain/pitch'
 import { Gain, PolySynth, Sampler, start, Synth } from 'tone'
+import { defaultInstrumentVolume } from '@/audio/instrumentAudio'
 import { pianoSamples } from '@/audio/pianoSamples'
 import { scientificPitch } from '@/domain/pitch'
 
@@ -42,7 +43,7 @@ class TonePianoAudioEngine implements InstrumentAudioEngine {
     })
 
     try {
-      this.output = new Gain(0.72).toDestination()
+      this.output = new Gain(defaultInstrumentVolume).toDestination()
       this.fallback = new PolySynth(Synth, {
         oscillator: { type: 'triangle' },
         envelope: { attack: 0.012, decay: 0.12, sustain: 0.2, release: 0.42 },

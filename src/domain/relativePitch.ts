@@ -17,15 +17,20 @@ export interface RelativePitchAudioStep {
   gapMilliseconds: number
 }
 
-export interface TonicQuestion {
+interface TonicQuestionBase {
   id: string
-  type: TonicExercise
   scale: MajorScaleDefinition
   tonicMidi: MidiNote
+}
+
+export type TonicQuestion = TonicQuestionBase & ({
+  type: 'piano'
+} | {
+  type: 'choice'
   distractorDegree: number
   candidateMidi: readonly [MidiNote, MidiNote]
   correctCandidateIndex: 0 | 1
-}
+})
 
 export interface DegreeQuestion {
   id: string
@@ -189,15 +194,17 @@ export function createTonicQuestionGenerator(random = Math.random): () => TonicQ
   return () => {
     const scale = nextScale()
     const type = nextExercise()
-    const distractorDegree = nextDistractorDegree()
     const tonicMidi = scale.lowTonicMidi
+    const base = { id: `tonic-${++serial}`, scale, tonicMidi }
+    if (type === 'piano') {
+      return { ...base, type }
+    }
+    const distractorDegree = nextDistractorDegree()
     const distractorMidi = scaleDegreeMidi(scale, distractorDegree)
     const tonicFirst = random() < 0.5
     return {
-      id: `tonic-${++serial}`,
+      ...base,
       type,
-      scale,
-      tonicMidi,
       distractorDegree,
       candidateMidi: tonicFirst ? [tonicMidi, distractorMidi] : [distractorMidi, tonicMidi],
       correctCandidateIndex: tonicFirst ? 0 : 1,

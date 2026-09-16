@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { pianoTool } from '@/tools/catalog'
 
@@ -14,6 +14,8 @@ interface Stage {
 }
 
 const notice = ref('')
+let noticeTimer: ReturnType<typeof setTimeout> | undefined
+onBeforeUnmount(() => clearTimeout(noticeTimer))
 const router = useRouter()
 
 const navItems = [
@@ -106,8 +108,9 @@ const toneClasses = {
 }
 
 function showNotice(message: string) {
+  clearTimeout(noticeTimer)
   notice.value = message
-  window.setTimeout(() => {
+  noticeTimer = setTimeout(() => {
     notice.value = ''
   }, 2600)
 }

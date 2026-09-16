@@ -361,6 +361,12 @@ function handleExitAction() {
 }
 
 function handleKeydown(event: KeyboardEvent) {
+  if (event.repeat || event.ctrlKey || event.metaKey || event.altKey || event.isComposing) {
+    return
+  }
+  if (event.target instanceof HTMLElement && event.target.closest('input, textarea, select, [contenteditable]:not([contenteditable="false"])')) {
+    return
+  }
   if (phase.value === 'setup') {
     return
   }
