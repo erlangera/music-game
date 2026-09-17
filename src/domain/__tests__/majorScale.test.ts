@@ -46,26 +46,26 @@ test('twelve major tonics preserve letter spelling, pitch classes and ascending 
   }
 })
 
-test('mixed generator covers every scale and exercise without changing answer rules', () => {
-  const next = createMajorScaleGenerator({ focus: 'mixed', key: 'all', mode: 'fixed' }, seeded(7))
+test('selected question types cover every scale and exercise without changing answer rules', () => {
+  const next = createMajorScaleGenerator({ exercises: ['accidentals', 'repair', 'mapping', 'piano'], key: 'all', mode: 'fixed' }, seeded(7))
   const questions = Array.from({ length: 16 }, next)
   assert.deepEqual([...new Set(questions.slice(0, 12).map(question => question.scale.id))].sort(), [...majorScaleIds].sort())
   assert.deepEqual([...new Set(questions.slice(0, 4).map(question => question.type))].sort(), ['accidentals', 'mapping', 'piano', 'repair'])
 })
 
 test('accidental, repair and bidirectional mapping questions score exact answers', () => {
-  const accidentals = createMajorScaleGenerator({ focus: 'accidentals', key: 'D', mode: 'fixed' }, () => 0)()
+  const accidentals = createMajorScaleGenerator({ exercises: ['accidentals'], key: 'D', mode: 'fixed' }, () => 0)()
   assert.equal(accidentals.type, 'accidentals')
   assert.ok(isAccidentalsAnswer(accidentals, [2, 6]))
   assert.ok(!isAccidentalsAnswer(accidentals, [2]))
 
-  const repair = createMajorScaleGenerator({ focus: 'repair', key: 'F', mode: 'fixed' }, () => 0)()
+  const repair = createMajorScaleGenerator({ exercises: ['repair'], key: 'F', mode: 'fixed' }, () => 0)()
   assert.equal(repair.type, 'repair')
   assert.equal(repair.displayedNotes[3], 'B')
   assert.ok(isRepairAnswer(repair, 3, '♭'))
   assert.ok(!isRepairAnswer(repair, 3, '♯'))
 
-  const nextMapping = createMajorScaleGenerator({ focus: 'mapping', key: 'G', mode: 'fixed' }, () => 0)
+  const nextMapping = createMajorScaleGenerator({ exercises: ['mapping'], key: 'G', mode: 'fixed' }, () => 0)
   const forward = nextMapping()
   const reverse = nextMapping()
   assert.equal(forward.type, 'mapping')
@@ -73,4 +73,14 @@ test('accidental, repair and bidirectional mapping questions score exact answers
   assert.notEqual(forward.direction, reverse.direction)
   assert.ok(isMappingAnswer(forward, forward.direction === 'degree-to-note' ? 'G' : '1'))
   assert.ok(isMappingAnswer(reverse, reverse.direction === 'degree-to-note' ? 'G' : '1'))
+})
+
+test('selected major-scale question types stay balanced and reject an empty selection', () => {
+  const next = createMajorScaleGenerator({ exercises: ['repair', 'piano'], key: 'all', mode: 'infinite' }, seeded(9))
+  const questions = Array.from({ length: 20 }, next)
+
+  assert.equal(questions.filter(question => question.type === 'repair').length, 10)
+  assert.equal(questions.filter(question => question.type === 'piano').length, 10)
+  assert.ok(questions.every((question, index) => index === 0 || question.type !== questions[index - 1]!.type))
+  assert.throws(() => createMajorScaleGenerator({ exercises: [], key: 'all', mode: 'fixed' }), RangeError)
 })

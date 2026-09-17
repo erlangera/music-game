@@ -5,7 +5,6 @@ export const majorScaleIds = ['C', 'G', 'F', 'D', 'A', 'B♭', 'E', 'E♭', 'B',
 export type MajorScaleId = typeof majorScaleIds[number]
 export type Accidental = '' | '♯' | '♭'
 export type MajorScaleExercise = 'accidentals' | 'repair' | 'mapping' | 'piano'
-export type MajorScaleFocus = MajorScaleExercise | 'mixed'
 export type PracticeMode = 'fixed' | 'infinite'
 
 export interface MajorScaleDefinition {
@@ -20,7 +19,7 @@ export interface MajorScaleDefinition {
 }
 
 export interface MajorScaleSettings {
-  focus: MajorScaleFocus
+  exercises: MajorScaleExercise[]
   key: MajorScaleId | 'all'
   mode: PracticeMode
 }
@@ -242,9 +241,14 @@ export function isMappingAnswer(question: MappingQuestion, answer: string | unde
 }
 
 export function createMajorScaleGenerator(settings: MajorScaleSettings, random = Math.random): () => MajorScaleQuestion {
+  const selectedExercises = [...new Set(settings.exercises)]
+  if (selectedExercises.length === 0) {
+    throw new RangeError('At least one major scale question type must be enabled')
+  }
   let serial = 0
   let scaleQueue: MajorScaleId[] = []
   let exerciseQueue: MajorScaleExercise[] = []
+  let lastExercise: MajorScaleExercise | undefined
   let mappingDirection: MappingQuestion['direction'] = random() < 0.5 ? 'degree-to-note' : 'note-to-degree'
 
   function nextScale() {
@@ -258,13 +262,14 @@ export function createMajorScaleGenerator(settings: MajorScaleSettings, random =
   }
 
   function nextExercise() {
-    if (settings.focus !== 'mixed') {
-      return settings.focus
-    }
     if (!exerciseQueue.length) {
-      exerciseQueue = shuffle(majorScaleExercises, random)
+      exerciseQueue = shuffle(selectedExercises, random)
+      if (exerciseQueue.length > 1 && exerciseQueue[0] === lastExercise) {
+        exerciseQueue = [...exerciseQueue.slice(1), exerciseQueue[0]!]
+      }
     }
-    return exerciseQueue.shift()!
+    lastExercise = exerciseQueue.shift()!
+    return lastExercise
   }
 
   return () => {

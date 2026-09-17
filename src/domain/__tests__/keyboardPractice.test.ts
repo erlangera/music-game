@@ -14,7 +14,7 @@ function seeded(seed: number) {
 test('all sequence lengths preserve twelve-tone coverage, direction quotas and fixed unique options', () => {
   for (let length = 1; length <= 12; length++) {
     for (let seed = 0; seed < 10; seed++) {
-      const next = createKeyboardGenerator({ direction: 'mixed', mode: 'infinite', sequenceLength: length }, seeded(seed))
+      const next = createKeyboardGenerator({ directions: ['name-to-key', 'key-to-name'], mode: 'infinite', sequenceLength: length }, seeded(seed))
       const questions = Array.from({ length: 120 }, next)
       const stream = questions.flatMap(question => question.sequence.map(note => note.pitch))
       for (let i = 0; i < stream.length; i++) {
@@ -88,12 +88,16 @@ test('piano key feedback has one shared semantic priority', () => {
 
 test('single directions, constant random sources and invalid lengths', () => {
   for (const direction of ['name-to-key', 'key-to-name'] as const) {
-    const next = createKeyboardGenerator({ direction, mode: 'fixed', sequenceLength: 12 }, () => 0)
+    const next = createKeyboardGenerator({ directions: [direction], mode: 'fixed', sequenceLength: 12 }, () => 0)
     assert.ok(Array.from({ length: 10 }, next).every(q => q.direction === direction && q.sequence.length === 12))
   }
   for (const sequenceLength of [0, 13, 1.5, Number.NaN]) {
-    assert.throws(() => createKeyboardGenerator({ direction: 'mixed', mode: 'fixed', sequenceLength }), RangeError)
+    assert.throws(() => createKeyboardGenerator({ directions: ['name-to-key', 'key-to-name'], mode: 'fixed', sequenceLength }), RangeError)
   }
+  assert.throws(() => createKeyboardGenerator({ directions: [], mode: 'fixed', sequenceLength: 1 }), RangeError)
+
+  const deduplicated = createKeyboardGenerator({ directions: ['name-to-key', 'name-to-key'], mode: 'fixed', sequenceLength: 1 }, seeded(1))
+  assert.ok(Array.from({ length: 5 }, deduplicated).every(question => question.direction === 'name-to-key'))
 })
 
 function fakePlayer() {

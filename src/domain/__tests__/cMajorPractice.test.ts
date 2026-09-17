@@ -28,7 +28,7 @@ test('both directions and every length use balanced seven-note bags without adja
   for (const direction of ['degree-to-key', 'key-to-degree'] as const) {
     for (let sequenceLength = 1; sequenceLength <= 12; sequenceLength++) {
       for (let seed = 0; seed < 10; seed++) {
-        const next = createMappingGenerator({ direction, sequenceLength, mode: 'fixed' }, seeded(seed))
+        const next = createMappingGenerator({ directions: [direction], sequenceLength, mode: 'fixed' }, seeded(seed))
         const questions = Array.from({ length: 70 }, next)
         assert.ok(questions.every(q => q.direction === direction && q.sequence.length === sequenceLength))
         const stream = questions.flatMap(q => q.sequence.map(note => note.degree))
@@ -44,7 +44,19 @@ test('both directions and every length use balanced seven-note bags without adja
     }
   }
   for (const sequenceLength of [0, 13, 1.5, Number.NaN]) {
-    assert.throws(() => createMappingGenerator({ direction: 'degree-to-key', sequenceLength, mode: 'fixed' }), RangeError)
+    assert.throws(() => createMappingGenerator({ directions: ['degree-to-key'], sequenceLength, mode: 'fixed' }), RangeError)
+  }
+  assert.throws(() => createMappingGenerator({ directions: [], sequenceLength: 1, mode: 'fixed' }), RangeError)
+})
+
+test('selected mapping question types stay balanced and avoid adjacent repeats', () => {
+  for (let seed = 0; seed < 20; seed++) {
+    const next = createMappingGenerator({ directions: ['degree-to-key', 'key-to-degree'], sequenceLength: 1, mode: 'infinite' }, seeded(seed))
+    const questions = Array.from({ length: 20 }, next)
+
+    assert.equal(questions.filter(question => question.direction === 'degree-to-key').length, 10)
+    assert.equal(questions.filter(question => question.direction === 'key-to-degree').length, 10)
+    assert.ok(questions.every((question, index) => index === 0 || question.direction !== questions[index - 1]!.direction))
   }
 })
 

@@ -5,9 +5,9 @@ import { shuffle } from './solfegePractice.ts'
 export type { NamedPitch, Pitch } from './piano.ts'
 export { namedPitch, pianoKeys, pianoKeyShortcuts, pitches, pitchNames } from './piano.ts'
 export type KeyboardDirection = 'name-to-key' | 'key-to-name'
-export type KeyboardDirectionSetting = KeyboardDirection | 'mixed'
+export const keyboardDirections: readonly KeyboardDirection[] = ['name-to-key', 'key-to-name']
 export interface KeyboardSettings {
-  direction: KeyboardDirectionSetting
+  directions: KeyboardDirection[]
   mode: 'fixed' | 'infinite'
   sequenceLength: number
 }
@@ -23,9 +23,14 @@ export function createKeyboardGenerator(settings: KeyboardSettings, random = Mat
   if (!Number.isInteger(settings.sequenceLength) || settings.sequenceLength < 1 || settings.sequenceLength > 12) {
     throw new RangeError('Sequence length must be an integer from 1 to 12')
   }
+  const selectedDirections = [...new Set(settings.directions)]
+  if (selectedDirections.length === 0) {
+    throw new RangeError('At least one keyboard question type must be enabled')
+  }
   let notes: Pitch[] = []
   let lastNote: Pitch | undefined
-  let directions: KeyboardDirection[] = []
+  let directionQueue: KeyboardDirection[] = []
+  let lastDirection: KeyboardDirection | undefined
   let previousOptions = ''
   function nextNote() {
     if (!notes.length) {
@@ -37,11 +42,18 @@ export function createKeyboardGenerator(settings: KeyboardSettings, random = Mat
     lastNote = notes.shift()!
     return namedPitch(lastNote, random)
   }
-  return (): KeyboardQuestion => {
-    if (settings.direction === 'mixed' && !directions.length) {
-      directions = random() < 0.5 ? ['name-to-key', 'key-to-name'] : ['key-to-name', 'name-to-key']
+  function nextDirection() {
+    if (!directionQueue.length) {
+      directionQueue = shuffle(selectedDirections, random)
+      if (directionQueue.length > 1 && directionQueue[0] === lastDirection) {
+        directionQueue = [...directionQueue.slice(1), directionQueue[0]!]
+      }
     }
-    const direction = settings.direction === 'mixed' ? directions.shift()! : settings.direction
+    lastDirection = directionQueue.shift()!
+    return lastDirection
+  }
+  return (): KeyboardQuestion => {
+    const direction = nextDirection()
     const sequence = Array.from({ length: settings.sequenceLength }, nextNote)
     let order = shuffle(pitches, random)
     const forbidden = new Set([pitches.join(','), [...pitches].reverse().join(','), previousOptions])

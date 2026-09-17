@@ -5,8 +5,9 @@ import { shuffle } from './solfegePractice.ts'
 export const degrees = [1, 2, 3, 4, 5, 6, 7] as const
 export type Degree = typeof degrees[number]
 export type MappingDirection = 'degree-to-key' | 'key-to-degree'
+export const mappingDirections: readonly MappingDirection[] = ['degree-to-key', 'key-to-degree']
 export interface MappingSettings {
-  direction: MappingDirection
+  directions: MappingDirection[]
   mode: 'fixed' | 'infinite'
   sequenceLength: number
 }
@@ -46,12 +47,18 @@ export function answerMapping(question: MappingQuestion, answer: MappingAnswer, 
 }
 
 export function createMappingGenerator(settings: MappingSettings, random = Math.random) {
-  const { direction, sequenceLength } = settings
+  const { sequenceLength } = settings
   if (!Number.isInteger(sequenceLength) || sequenceLength < 1 || sequenceLength > 12) {
     throw new RangeError('Sequence length must be an integer from 1 to 12')
   }
+  const selectedDirections = [...new Set(settings.directions)]
+  if (selectedDirections.length === 0) {
+    throw new RangeError('At least one mapping question type must be enabled')
+  }
   let bag: MappingNote[] = []
+  let directionQueue: MappingDirection[] = []
   let last: Degree | undefined
+  let lastDirection: MappingDirection | undefined
   function nextNote() {
     if (!bag.length) {
       bag = shuffle(cMajorNotes, random)
@@ -63,5 +70,15 @@ export function createMappingGenerator(settings: MappingSettings, random = Math.
     last = note.degree
     return note
   }
-  return (): MappingQuestion => ({ direction, sequence: Array.from({ length: sequenceLength }, nextNote) })
+  function nextDirection() {
+    if (!directionQueue.length) {
+      directionQueue = shuffle(selectedDirections, random)
+      if (directionQueue.length > 1 && directionQueue[0] === lastDirection) {
+        directionQueue = [...directionQueue.slice(1), directionQueue[0]!]
+      }
+    }
+    lastDirection = directionQueue.shift()!
+    return lastDirection
+  }
+  return (): MappingQuestion => ({ direction: nextDirection(), sequence: Array.from({ length: sequenceLength }, nextNote) })
 }

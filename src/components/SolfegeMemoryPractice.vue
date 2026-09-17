@@ -7,6 +7,7 @@ import type {
   QuestionDirection,
   SolfegeName,
   SolfegePair,
+  SolfegeQuestionType,
 } from '@/domain/solfegePractice'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
@@ -16,12 +17,13 @@ import SpeakerIcon from '@/components/SpeakerIcon.vue'
 import { useSolfegeAudio } from '@/composables/useSolfegeAudio'
 import {
   allDegrees,
+  allSolfegeQuestionTypes,
   createBalancedPairDeck,
   createFixedQuestionQueue,
+  createQuestionTypeOrder,
   createSolfegeOptionOrder,
   expectedAnswerAt,
   promptValueAt,
-  shuffle,
   solfegePairs,
 } from '@/domain/solfegePractice'
 
@@ -31,13 +33,18 @@ type PracticePhase = 'setup' | 'playing' | 'result'
 const emit = defineEmits<{ exit: [] }>()
 const fixedQuestionCount = 10
 const sequencePresets = [1, 4, 8, 12] as const
+const questionTypeOptions: readonly { value: SolfegeQuestionType, label: string, description: string }[] = [
+  { value: 'dictation', label: '听音选数字', description: '播放唱名语音，选择 1–7' },
+  { value: 'name-to-degree', label: '唱名选数字', description: '看到 do–si，选择 1–7' },
+  { value: 'degree-to-name', label: '数字选唱名', description: '看到 1–7，选择 do–si' },
+]
 
 const { playingKey, error: audioError, autoPlaying, stop: stopAudio, playItem, playSequence, advanceTo } = useSolfegeAudio()
-const draftDictation = ref(true)
+const draftQuestionTypes = ref<SolfegeQuestionType[]>([...allSolfegeQuestionTypes])
 const phase = ref<PracticePhase>('setup')
 const draftMode = ref<PracticeMode>('fixed')
 const draftSequenceLength = ref(1)
-const activeSettings = ref<PracticeSettings>({ mode: 'fixed', sequenceLength: 1, dictation: true })
+const activeSettings = ref<PracticeSettings>({ mode: 'fixed', sequenceLength: 1, questionTypes: [...allSolfegeQuestionTypes] })
 const fixedQuestionQueue = ref<PracticeQuestion[]>([])
 const currentQuestion = ref<PracticeQuestion | null>(null)
 const questionIndex = ref(0)
@@ -52,14 +59,16 @@ const nextButton = ref<HTMLButtonElement | null>(null)
 
 let advanceTimer: number | undefined
 let infinitePairBuffer: SolfegePair[] = []
-let infiniteDirectionBuffer: QuestionDirection[] = []
+let infiniteQuestionTypeBuffer: SolfegeQuestionType[] = []
 let lastInfinitePairName: SolfegeName | undefined
+let lastInfiniteQuestionType: SolfegeQuestionType | undefined
 
 const expectedAnswer = computed(() => currentQuestion.value
   ? expectedAnswerAt(currentQuestion.value, answerIndex.value)
   : undefined)
 const questionLength = computed(() => currentQuestion.value?.sequence.length ?? 1)
 const isSingleQuestion = computed(() => questionLength.value === 1)
+const isDictationQuestion = computed(() => currentQuestion.value?.type === 'dictation')
 const incorrectCount = computed(() => answeredCount.value - correctCount.value)
 const accuracy = computed(() => answeredCount.value === 0
   ? 0
@@ -94,7 +103,7 @@ const headerCounter = computed(() => {
   }
   return `${questionIndex.value + 1} / ${fixedQuestionCount}`
 })
-const headerModeLabel = computed(() => `${activeSettings.value.dictation ? '唱名默写' : '双向文字'} · ${activeSettings.value.sequenceLength} 项`)
+const headerModeLabel = computed(() => `${activeSettings.value.questionTypes.length} 种题型 · ${activeSettings.value.sequenceLength} 项`)
 const correctSequenceText = computed(() => currentQuestion.value
   ? currentQuestion.value.sequence.map((_, index) => expectedAnswerAt(currentQuestion.value!, index)).join(' ')
   : '')
@@ -112,6 +121,23 @@ function createOptionOrder(direction: QuestionDirection): AnswerValue[] {
   return previousNameOptions
 }
 
+function isQuestionTypeSelected(type: SolfegeQuestionType) {
+  return draftQuestionTypes.value.includes(type)
+}
+
+function toggleQuestionType(type: SolfegeQuestionType) {
+  if (isQuestionTypeSelected(type)) {
+    if (draftQuestionTypes.value.length === 1) {
+      return
+    }
+    draftQuestionTypes.value = draftQuestionTypes.value.filter(item => item !== type)
+    return
+  }
+  draftQuestionTypes.value = allSolfegeQuestionTypes.filter(item => (
+    item === type || draftQuestionTypes.value.includes(item)
+  ))
+}
+
 function clearAdvanceTimer() {
   if (advanceTimer !== undefined) {
     window.clearTimeout(advanceTimer)
@@ -121,8 +147,9 @@ function clearAdvanceTimer() {
 
 function resetInfiniteGenerator() {
   infinitePairBuffer = []
-  infiniteDirectionBuffer = []
+  infiniteQuestionTypeBuffer = []
   lastInfinitePairName = undefined
+  lastInfiniteQuestionType = undefined
 }
 
 function takeInfinitePairs(count: number) {
@@ -140,16 +167,25 @@ function takeInfinitePairs(count: number) {
   return infinitePairBuffer.splice(0, count)
 }
 
-function takeInfiniteDirection() {
-  if (infiniteDirectionBuffer.length === 0) {
-    infiniteDirectionBuffer = shuffle<QuestionDirection>(['name-to-degree', 'degree-to-name'])
+function takeInfiniteQuestionType() {
+  if (infiniteQuestionTypeBuffer.length === 0) {
+    infiniteQuestionTypeBuffer = createQuestionTypeOrder(
+      activeSettings.value.questionTypes.length,
+      activeSettings.value.questionTypes,
+      Math.random,
+      lastInfiniteQuestionType,
+    )
   }
-  return infiniteDirectionBuffer.shift()!
+  const type = infiniteQuestionTypeBuffer.shift()!
+  lastInfiniteQuestionType = type
+  return type
 }
 
 function createInfiniteQuestion(): PracticeQuestion {
+  const type = takeInfiniteQuestionType()
   return {
-    direction: takeInfiniteDirection(),
+    type,
+    direction: type === 'degree-to-name' ? 'degree-to-name' : 'name-to-degree',
     sequence: takeInfinitePairs(activeSettings.value.sequenceLength),
   }
 }
@@ -157,16 +193,13 @@ function createInfiniteQuestion(): PracticeQuestion {
 function prepareQuestion(question: PracticeQuestion) {
   stopAudio()
   audioError.value = ''
-  if (activeSettings.value.dictation) {
-    question = { ...question, direction: 'name-to-degree' }
-  }
   currentQuestion.value = question
   selectedAnswer.value = null
   answerIndex.value = 0
   failedAnswerIndex.value = null
   answerState.value = 'answering'
   optionOrder.value = createOptionOrder(question.direction)
-  if (activeSettings.value.dictation) {
+  if (question.type === 'dictation') {
     void playSequence(question.sequence.map(pair => pair.name))
   }
 }
@@ -180,7 +213,7 @@ function beginSession(settings: PracticeSettings) {
   resetInfiniteGenerator()
 
   if (settings.mode === 'fixed') {
-    fixedQuestionQueue.value = createFixedQuestionQueue(fixedQuestionCount, settings.sequenceLength)
+    fixedQuestionQueue.value = createFixedQuestionQueue(fixedQuestionCount, settings.sequenceLength, settings.questionTypes)
     prepareQuestion(fixedQuestionQueue.value[0]!)
   }
   else {
@@ -192,7 +225,7 @@ function beginSession(settings: PracticeSettings) {
 }
 
 function startSession() {
-  beginSession({ mode: draftMode.value, sequenceLength: draftSequenceLength.value, dictation: draftDictation.value })
+  beginSession({ mode: draftMode.value, sequenceLength: draftSequenceLength.value, questionTypes: [...draftQuestionTypes.value] })
 }
 
 function restartSession() {
@@ -202,7 +235,7 @@ function restartSession() {
 function openSetup() {
   clearAdvanceTimer()
   stopAudio()
-  draftDictation.value = activeSettings.value.dictation
+  draftQuestionTypes.value = [...activeSettings.value.questionTypes]
   draftMode.value = activeSettings.value.mode
   draftSequenceLength.value = activeSettings.value.sequenceLength
   currentQuestion.value = null
@@ -246,7 +279,7 @@ function submitAnswer(answer: AnswerValue) {
   selectedAnswer.value = answer
   if (answer !== expectedAnswer.value) {
     failedAnswerIndex.value = answerIndex.value
-    if (activeSettings.value.dictation) {
+    if (isDictationQuestion.value) {
       stopAudio()
     }
     answerState.value = 'incorrect'
@@ -257,13 +290,13 @@ function submitAnswer(answer: AnswerValue) {
 
   if (answerIndex.value < currentQuestion.value.sequence.length - 1) {
     answerIndex.value += 1
-    if (activeSettings.value.dictation) {
+    if (isDictationQuestion.value) {
       advanceTo(answerIndex.value)
     }
     return
   }
 
-  if (activeSettings.value.dictation) {
+  if (isDictationQuestion.value) {
     stopAudio()
   }
   answerState.value = 'correct'
@@ -316,11 +349,11 @@ function chooseAnswer(answer: AnswerValue) {
 }
 
 function canPlayPrompt(index: number) {
-  return activeSettings.value.dictation || typeof questionDisplayAt(index) === 'string'
+  return isDictationQuestion.value || typeof questionDisplayAt(index) === 'string'
 }
 
 function isConvertedSequenceItem(index: number) {
-  return (!isSingleQuestion.value || activeSettings.value.dictation)
+  return (!isSingleQuestion.value || isDictationQuestion.value)
     && (answerState.value === 'correct' || index < answerIndex.value)
 }
 
@@ -329,7 +362,7 @@ function questionDisplayAt(index: number) {
     return undefined
   }
 
-  if (activeSettings.value.dictation && !isConvertedSequenceItem(index)) {
+  if (isDictationQuestion.value && !isConvertedSequenceItem(index)) {
     return undefined
   }
 
@@ -339,7 +372,7 @@ function questionDisplayAt(index: number) {
 }
 
 function questionTokenAriaLabel(index: number) {
-  if (activeSettings.value.dictation && !isConvertedSequenceItem(index)) {
+  if (isDictationQuestion.value && !isConvertedSequenceItem(index)) {
     return `播放第 ${index + 1} 项`
   }
   const value = questionDisplayAt(index)
@@ -462,7 +495,7 @@ onBeforeUnmount(() => {
         <div class="rounded-[26px] border border-line bg-white px-5 py-7 text-center shadow-card sm:rounded-[30px] sm:px-9 sm:py-10 lg:p-12">
           <div class="flex flex-wrap items-center justify-center gap-2">
             <p id="question-title" class="text-xs font-extrabold tracking-wide text-muted sm:text-sm">
-              {{ activeSettings.dictation ? '听唱名，依次选择对应的简谱数字' : currentQuestion.direction === 'name-to-degree' ? '看到唱名，依次选择对应的简谱数字' : '看到简谱数字，依次选择对应的唱名' }}
+              {{ isDictationQuestion ? '听唱名，依次选择对应的简谱数字' : currentQuestion.direction === 'name-to-degree' ? '看到唱名，依次选择对应的简谱数字' : '看到简谱数字，依次选择对应的唱名' }}
             </p>
             <span v-if="!isSingleQuestion" class="rounded-full bg-brand-soft px-2.5 py-1 text-[10px] font-extrabold text-brand-dark">第 {{ Math.min(answerIndex + 1, questionLength) }} / {{ questionLength }} 项</span>
           </div>
@@ -477,14 +510,14 @@ onBeforeUnmount(() => {
               </li>
             </ol>
             <p class="mt-4 text-sm font-bold text-muted sm:text-base">
-              {{ activeSettings.dictation ? '点击小喇叭可重听，答对后显示数字' : isSingleQuestion ? currentQuestion.direction === 'name-to-degree' ? '它对应哪个数字？' : '它对应哪个唱名？' : '从左到右作答，答对后会在原位置完成转换' }}
+              {{ isDictationQuestion ? '点击小喇叭可重听，答对后显示数字' : isSingleQuestion ? currentQuestion.direction === 'name-to-degree' ? '它对应哪个数字？' : '它对应哪个唱名？' : '从左到右作答，答对后会在原位置完成转换' }}
             </p>
             <div v-if="!isSingleQuestion" class="mx-auto mt-4 h-1.5 max-w-md overflow-hidden rounded-full bg-[#edf0ed]" aria-hidden="true">
               <div class="h-full rounded-full bg-brand transition-[width] duration-200" :style="{ width: `${sequenceProgress}%` }" />
             </div>
           </div>
 
-          <p v-if="activeSettings.dictation || audioError" class="mb-4 text-xs font-bold text-muted" role="status">
+          <p v-if="isDictationQuestion || audioError" class="mb-4 text-xs font-bold text-muted" role="status">
             {{ audioError || (autoPlaying ? '正在依次播放 · 每项结束后间隔 1 秒 · 点击可中断' : '点击任意小喇叭，重听对应唱名') }}
           </p>
           <div class="grid grid-cols-4 gap-2.5 sm:gap-3 lg:grid-cols-7" aria-label="答案选项">
@@ -574,16 +607,21 @@ onBeforeUnmount(() => {
       </section>
     </main>
 
-    <PracticeSetupDialog v-if="phase === 'setup'" title="开始唱名训练" description="选择适合这次练习的模式和序列长度" @start="startSession" @cancel="emit('exit')">
+    <PracticeSetupDialog v-if="phase === 'setup'" title="开始唱名训练" description="选择题型、题目数量和序列长度" @start="startSession" @cancel="emit('exit')">
       <fieldset>
         <legend class="text-sm font-extrabold text-ink">
-          唱名默写
+          题型（可多选）
         </legend>
-        <button type="button" role="switch" :aria-checked="draftDictation" aria-label="唱名默写" class="mt-2 flex min-h-16 w-full items-center gap-3 rounded-[20px] border-2 p-3 text-left transition" :class="draftDictation ? 'border-brand bg-brand-soft' : 'border-line bg-white'" @click="draftDictation = !draftDictation">
-          <span class="grid size-9 shrink-0 place-items-center rounded-xl bg-white text-brand-dark"><SpeakerIcon class="size-5" /></span>
-          <span class="flex-1"><strong class="block text-sm font-black text-ink">听唱名，选数字</strong><span class="mt-1 block text-xs font-bold text-muted">{{ draftDictation ? '隐藏唱名，每题自动播放' : '已关闭，使用双向文字训练' }}</span></span>
-          <span class="flex h-6 w-11 shrink-0 items-center rounded-full p-1 transition-colors" :class="draftDictation ? 'bg-brand' : 'bg-muted'" aria-hidden="true"><span class="size-4 rounded-full bg-white transition-transform" :class="draftDictation ? 'translate-x-5' : ''" /></span>
-        </button>
+        <div class="mt-2 grid grid-cols-3 gap-2">
+          <button v-for="option in questionTypeOptions" :key="option.value" type="button" role="checkbox" :aria-checked="isQuestionTypeSelected(option.value)" class="relative min-h-20 rounded-[20px] border-2 p-2 text-center transition sm:min-h-24 sm:p-3 sm:text-left" :class="isQuestionTypeSelected(option.value) ? 'border-brand bg-brand-soft' : 'border-line bg-white hover:border-brand/30'" @click="toggleQuestionType(option.value)">
+            <strong class="block pt-4 text-[11px]/4 font-black whitespace-nowrap text-ink sm:pt-0 sm:pr-5 sm:text-sm sm:whitespace-normal">{{ option.label }}</strong>
+            <span class="mt-2 hidden text-xs font-bold text-muted sm:block">{{ option.description }}</span>
+            <span v-if="isQuestionTypeSelected(option.value)" class="absolute top-2 right-2 grid size-4 place-items-center rounded-full bg-brand text-xs font-black text-white" aria-hidden="true">✓</span>
+          </button>
+        </div>
+        <p class="mt-2 text-[11px] font-bold text-muted">
+          默认全选；训练时会在所选题型间均衡出题，至少保留一种。
+        </p>
       </fieldset>
 
       <fieldset>

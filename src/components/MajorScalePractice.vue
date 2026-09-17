@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Accidental, MajorScaleFocus, MajorScaleQuestion, MajorScaleSettings } from '@/domain/majorScale'
+import type { Accidental, MajorScaleExercise, MajorScaleQuestion, MajorScaleSettings } from '@/domain/majorScale'
 import type { PianoKeyMark } from '@/domain/piano'
 import type { MidiNote } from '@/domain/pitch'
 import { computed, nextTick, onMounted, ref } from 'vue'
@@ -20,14 +20,13 @@ import {
 import { midiNote } from '@/domain/pitch'
 
 const emit = defineEmits<{ exit: [] }>()
-const focusOptions: { value: MajorScaleFocus, label: string, description: string }[] = [
-  { value: 'mixed', label: '综合练习', description: '系统混合四种题型' },
+const questionTypeOptions: readonly { value: MajorScaleExercise, label: string, description: string }[] = [
   { value: 'accidentals', label: '变化音', description: '给音阶添加升降号' },
   { value: 'repair', label: '修复音阶', description: '找出并改正错误音' },
   { value: 'mapping', label: '音级映射', description: '音级与音名双向转换' },
   { value: 'piano', label: '钢琴弹奏', description: '从低八度主音顺序弹奏' },
 ]
-const exerciseLabels: Record<Exclude<MajorScaleFocus, 'mixed'>, string> = {
+const exerciseLabels: Record<MajorScaleExercise, string> = {
   accidentals: '变化音',
   repair: '修复音阶',
   mapping: '音级映射',
@@ -35,8 +34,8 @@ const exerciseLabels: Record<Exclude<MajorScaleFocus, 'mixed'>, string> = {
 }
 
 const phase = ref<'setup' | 'playing' | 'result'>('setup')
-const settings = ref<MajorScaleSettings>({ focus: 'mixed', key: 'all', mode: 'fixed' })
-const active = ref<MajorScaleSettings>({ ...settings.value })
+const settings = ref<MajorScaleSettings>({ exercises: [...majorScaleExercises], key: 'all', mode: 'fixed' })
+const active = ref<MajorScaleSettings>({ ...settings.value, exercises: [...settings.value.exercises] })
 const question = ref<MajorScaleQuestion>()
 const questionNumber = ref(0)
 const correctCount = ref(0)
@@ -140,6 +139,23 @@ function clearTransition() {
   clearPlayback()
 }
 
+function isQuestionTypeSelected(exercise: MajorScaleExercise) {
+  return settings.value.exercises.includes(exercise)
+}
+
+function toggleQuestionType(exercise: MajorScaleExercise) {
+  if (isQuestionTypeSelected(exercise)) {
+    if (settings.value.exercises.length === 1) {
+      return
+    }
+    settings.value.exercises = settings.value.exercises.filter(item => item !== exercise)
+    return
+  }
+  settings.value.exercises = majorScaleExercises.filter(item => (
+    item === exercise || settings.value.exercises.includes(item)
+  ))
+}
+
 function finish() {
   clearTransition()
   phase.value = 'result'
@@ -171,7 +187,7 @@ function advance() {
 function begin(usePrevious = false) {
   clearTransition()
   if (!usePrevious) {
-    active.value = { ...settings.value }
+    active.value = { ...settings.value, exercises: [...settings.value.exercises] }
   }
   generate = createMajorScaleGenerator(active.value)
   correctCount.value = 0
@@ -183,7 +199,7 @@ function begin(usePrevious = false) {
 
 function setup() {
   clearTransition()
-  settings.value = { ...active.value }
+  settings.value = { ...active.value, exercises: [...active.value.exercises] }
   phase.value = 'setup'
   question.value = undefined
   focusHeading()
@@ -444,7 +460,7 @@ onMounted(() => void prepare())
           本轮结果只用于即时反馈，不会生成掌握度或保存长期记录。
         </p>
         <p class="mt-2 text-xs text-muted">
-          {{ active.key === 'all' ? '全部大调' : `${active.key} 大调` }} · {{ active.focus === 'mixed' ? '综合练习' : exerciseLabels[active.focus] }} · 共 {{ answered }} 题
+          {{ active.key === 'all' ? '全部大调' : `${active.key} 大调` }} · {{ active.exercises.length }} 种题型 · 共 {{ answered }} 题
         </p>
         <dl class="mt-7 grid grid-cols-3 gap-2 sm:gap-4">
           <div v-for="stat in [{ label: '正确', value: correctCount }, { label: '错误', value: wrongCount }, { label: '正确率', value: accuracy }]" :key="stat.label" class="rounded-xl border border-line py-5">
@@ -468,17 +484,21 @@ onMounted(() => void prepare())
       </section>
     </main>
 
-    <PracticeSetupDialog v-if="phase === 'setup'" title="开始自然大调训练" description="选择训练内容、调性和题目数量" cancel-label="返回首页" @start="begin()" @cancel="leave">
+    <PracticeSetupDialog v-if="phase === 'setup'" title="开始自然大调训练" description="选择题型、调性和题目数量" cancel-label="返回首页" @start="begin()" @cancel="leave">
       <fieldset>
-        <legend class="mb-2 text-sm font-bold text-muted">
-          训练内容
+        <legend class="text-sm font-extrabold text-ink">
+          题型（可多选）
         </legend>
-        <div class="grid gap-2 sm:grid-cols-2">
-          <label v-for="option in focusOptions" :key="option.value" class="flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl border-2 p-3 has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.focus === option.value ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
-            <span><strong class="block text-sm">{{ option.label }}</strong><span class="mt-1 block text-[11px] text-muted">{{ option.description }}</span></span>
-            <input v-model="settings.focus" type="radio" name="focus" :value="option.value" class="size-4 accent-brand">
-          </label>
+        <div class="mt-2 grid grid-cols-4 gap-2">
+          <button v-for="option in questionTypeOptions" :key="option.value" type="button" role="checkbox" :aria-checked="isQuestionTypeSelected(option.value)" class="relative min-h-16 rounded-[20px] border-2 p-1.5 text-center transition sm:min-h-24 sm:p-3 sm:text-left" :class="isQuestionTypeSelected(option.value) ? 'border-brand bg-brand-soft' : 'border-line bg-white hover:border-brand/30'" @click="toggleQuestionType(option.value)">
+            <strong class="block pt-5 text-[10px]/4 font-black whitespace-nowrap text-ink sm:pt-0 sm:pr-5 sm:text-sm sm:whitespace-normal">{{ option.label }}</strong>
+            <span class="mt-2 hidden text-xs font-bold text-muted sm:block">{{ option.description }}</span>
+            <span v-if="isQuestionTypeSelected(option.value)" class="absolute top-2 right-2 grid size-4 place-items-center rounded-full bg-brand text-xs font-black text-white" aria-hidden="true">✓</span>
+          </button>
         </div>
+        <p class="mt-2 text-[11px] font-bold text-muted">
+          默认全选；训练时会在所选题型间均衡出题，至少保留一种。
+        </p>
       </fieldset>
       <fieldset>
         <legend class="mb-2 text-sm font-bold text-muted">
@@ -491,13 +511,20 @@ onMounted(() => void prepare())
         </div>
       </fieldset>
       <fieldset>
-        <legend class="mb-2 text-sm font-bold text-muted">
-          训练长度
+        <legend class="text-sm font-extrabold text-ink">
+          题目数量
         </legend>
-        <div class="grid grid-cols-2 gap-3">
-          <label v-for="mode in (['fixed', 'infinite'] as const)" :key="mode" class="flex min-h-12 cursor-pointer items-center justify-between gap-2 rounded-2xl border-2 p-3 text-sm font-bold has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.mode === mode ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
-            {{ mode === 'fixed' ? '10 题' : '无限训练 ∞' }}<input v-model="settings.mode" type="radio" name="mode" :value="mode" class="size-4 accent-brand">
-          </label>
+        <div class="mt-2 grid grid-cols-2 gap-2">
+          <button type="button" role="radio" class="relative min-h-20 rounded-[20px] border-2 p-3 text-left transition" :class="settings.mode === 'fixed' ? 'border-brand bg-brand-soft' : 'border-line bg-white hover:border-brand/30'" :aria-checked="settings.mode === 'fixed'" @click="settings.mode = 'fixed'">
+            <strong class="text-sm font-black text-ink">10 题练习</strong>
+            <span class="mt-2.5 block text-[11px] font-bold text-muted sm:text-xs">完成后查看正确率</span>
+            <span v-if="settings.mode === 'fixed'" class="absolute top-2 right-2 grid size-4 place-items-center rounded-full bg-brand text-xs font-black text-white" aria-hidden="true">✓</span>
+          </button>
+          <button type="button" role="radio" class="relative min-h-20 rounded-[20px] border-2 p-3 text-left transition" :class="settings.mode === 'infinite' ? 'border-brand bg-brand-soft' : 'border-line bg-white hover:border-brand/30'" :aria-checked="settings.mode === 'infinite'" @click="settings.mode = 'infinite'">
+            <strong class="text-sm font-black text-ink">无限练习</strong>
+            <span class="mt-2.5 block text-[11px] font-bold text-muted sm:text-xs">随时结束查看报告</span>
+            <span v-if="settings.mode === 'infinite'" class="absolute top-2 right-2 grid size-4 place-items-center rounded-full bg-brand text-xs font-black text-white" aria-hidden="true">✓</span>
+          </button>
         </div>
       </fieldset>
       <p class="text-center text-xs/5 text-muted" role="status">

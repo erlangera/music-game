@@ -1,6 +1,7 @@
 export type Degree = 1 | 2 | 3 | 4 | 5 | 6 | 7
 export type SolfegeName = 'do' | 're' | 'mi' | 'fa' | 'sol' | 'la' | 'si'
 export type QuestionDirection = 'name-to-degree' | 'degree-to-name'
+export type SolfegeQuestionType = 'dictation' | QuestionDirection
 export type AnswerValue = Degree | SolfegeName
 export type PracticeMode = 'fixed' | 'infinite'
 
@@ -10,13 +11,14 @@ export interface SolfegePair {
 }
 
 export interface PracticeQuestion {
+  type: SolfegeQuestionType
   direction: QuestionDirection
   sequence: SolfegePair[]
 }
 
 export interface PracticeSettings {
-  dictation: boolean
   mode: PracticeMode
+  questionTypes: SolfegeQuestionType[]
   sequenceLength: number
 }
 
@@ -32,6 +34,7 @@ export const solfegePairs: readonly SolfegePair[] = [
 
 export const allDegrees: readonly Degree[] = [1, 2, 3, 4, 5, 6, 7]
 export const allSolfegeNames: readonly SolfegeName[] = ['do', 're', 'mi', 'fa', 'sol', 'la', 'si']
+export const allSolfegeQuestionTypes: readonly SolfegeQuestionType[] = ['dictation', 'name-to-degree', 'degree-to-name']
 
 export function shuffle<T>(values: readonly T[], random = Math.random): T[] {
   const result = [...values]
@@ -80,6 +83,34 @@ export function createDirectionOrder(count: number, random = Math.random): Quest
   ))
 }
 
+export function createQuestionTypeOrder(
+  count: number,
+  enabledTypes: readonly SolfegeQuestionType[],
+  random = Math.random,
+  previousType?: SolfegeQuestionType,
+): SolfegeQuestionType[] {
+  if (!Number.isInteger(count) || count < 0) {
+    throw new RangeError('Question count must be a non-negative integer')
+  }
+
+  const uniqueTypes = [...new Set(enabledTypes)]
+  if (uniqueTypes.length === 0) {
+    throw new RangeError('At least one question type must be enabled')
+  }
+
+  const order: SolfegeQuestionType[] = []
+  while (order.length < count) {
+    let cycle = shuffle(uniqueTypes, random)
+    const previous = order.at(-1) ?? previousType
+    if (cycle.length > 1 && cycle[0] === previous) {
+      cycle = [...cycle.slice(1), cycle[0]!]
+    }
+    order.push(...cycle)
+  }
+
+  return order.slice(0, count)
+}
+
 export function createBalancedPairDeck(totalItems: number, random = Math.random): SolfegePair[] {
   const deck: SolfegePair[] = []
 
@@ -99,13 +130,15 @@ export function createBalancedPairDeck(totalItems: number, random = Math.random)
 export function createFixedQuestionQueue(
   totalQuestions: number,
   sequenceLength: number,
+  questionTypes: readonly SolfegeQuestionType[],
   random = Math.random,
 ): PracticeQuestion[] {
-  const directions = createDirectionOrder(totalQuestions, random)
+  const types = createQuestionTypeOrder(totalQuestions, questionTypes, random)
   const pairDeck = createBalancedPairDeck(totalQuestions * sequenceLength, random)
 
-  return directions.map((direction, questionIndex) => ({
-    direction,
+  return types.map((type, questionIndex) => ({
+    type,
+    direction: type === 'degree-to-name' ? 'degree-to-name' : 'name-to-degree',
     sequence: pairDeck.slice(
       questionIndex * sequenceLength,
       (questionIndex + 1) * sequenceLength,

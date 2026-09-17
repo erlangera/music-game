@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { KeyboardDirectionSetting, KeyboardQuestion, KeyboardSettings, NamedPitch } from '@/domain/keyboardPractice'
+import type { KeyboardDirection, KeyboardQuestion, KeyboardSettings, NamedPitch } from '@/domain/keyboardPractice'
 import type { PianoKeyMark } from '@/domain/piano'
 import type { MidiNote } from '@/domain/pitch'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
@@ -7,19 +7,18 @@ import PianoKeyboard from '@/components/PianoKeyboard.vue'
 import PracticePageHeader from '@/components/PracticePageHeader.vue'
 import PracticeSetupDialog from '@/components/PracticeSetupDialog.vue'
 import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
-import { createHighlightPlayer, createKeyboardGenerator, isCorrectKey, namedPitch, pianoKeys, pianoKeyShortcuts } from '@/domain/keyboardPractice'
+import { createHighlightPlayer, createKeyboardGenerator, isCorrectKey, keyboardDirections, namedPitch, pianoKeys, pianoKeyShortcuts } from '@/domain/keyboardPractice'
 import { pitchClassOf } from '@/domain/pitch'
 
 const emit = defineEmits<{ exit: [] }>()
 const sequencePresets = [1, 4, 8, 12] as const
-const directions: { value: KeyboardDirectionSetting, label: string }[] = [
-  { value: 'name-to-key', label: '音名 → 琴键' },
-  { value: 'key-to-name', label: '琴键 → 音名' },
-  { value: 'mixed', label: '双向混合' },
+const questionTypeOptions: readonly { value: KeyboardDirection, label: string, description: string }[] = [
+  { value: 'name-to-key', label: '音名找琴键', description: '看到音名，在琴键上找到位置' },
+  { value: 'key-to-name', label: '琴键选音名', description: '看到琴键，从选项中选择音名' },
 ]
 const phase = ref<'setup' | 'playing' | 'result'>('setup')
-const settings = ref<KeyboardSettings>({ direction: 'mixed', mode: 'fixed', sequenceLength: 1 })
-const active = ref<KeyboardSettings>({ ...settings.value })
+const settings = ref<KeyboardSettings>({ directions: [...keyboardDirections], mode: 'fixed', sequenceLength: 1 })
+const active = ref<KeyboardSettings>({ ...settings.value, directions: [...settings.value.directions] })
 const question = ref<KeyboardQuestion>()
 const selected = ref<NamedPitch>()
 const answerIndex = ref(0)
@@ -48,7 +47,7 @@ const wasCorrect = computed(() => answerState.value === 'correct')
 const currentItem = computed(() => question.value?.sequence[Math.min(answerIndex.value, (question.value?.sequence.length ?? 1) - 1)])
 const isSequence = computed(() => (question.value?.sequence.length ?? 1) > 1)
 const nameToKey = computed(() => question.value?.direction === 'name-to-key')
-const directionLabel = computed(() => directions.find(item => item.value === question.value?.direction)?.label)
+const directionLabel = computed(() => questionTypeOptions.find(item => item.value === question.value?.direction)?.label)
 const lastQuestion = computed(() => active.value.mode === 'fixed' && questionNumber.value === 10)
 const setupAudioMessage = computed(() => {
   switch (audioStatus.value) {
@@ -100,6 +99,23 @@ function focusHeading() {
   })
 }
 
+function isQuestionTypeSelected(direction: KeyboardDirection) {
+  return settings.value.directions.includes(direction)
+}
+
+function toggleQuestionType(direction: KeyboardDirection) {
+  if (isQuestionTypeSelected(direction)) {
+    if (settings.value.directions.length === 1) {
+      return
+    }
+    settings.value.directions = settings.value.directions.filter(item => item !== direction)
+    return
+  }
+  settings.value.directions = keyboardDirections.filter(item => (
+    item === direction || settings.value.directions.includes(item)
+  ))
+}
+
 function finish() {
   clearTransition()
   phase.value = 'result'
@@ -126,7 +142,7 @@ function advance() {
 function begin(usePrevious = false) {
   clearTransition()
   if (!usePrevious) {
-    active.value = { ...settings.value }
+    active.value = { ...settings.value, directions: [...settings.value.directions] }
   }
   generate = createKeyboardGenerator(active.value)
   correctCount.value = 0
@@ -140,7 +156,7 @@ function begin(usePrevious = false) {
 
 function setup() {
   clearTransition()
-  settings.value = { ...active.value }
+  settings.value = { ...active.value, directions: [...active.value.directions] }
   phase.value = 'setup'
   question.value = undefined
   focusHeading()
@@ -335,7 +351,7 @@ onBeforeUnmount(() => {
           {{ answered ? '继续练习，让音名和琴键位置形成稳定映射。' : '准备好后，再开始一次键位练习。' }}
         </p>
         <p class="mt-2 text-xs text-muted">
-          {{ directions.find(item => item.value === active.direction)?.label }} · 共 {{ answered }} 题 · 每题 {{ active.sequenceLength }} 项
+          {{ active.directions.length }} 种题型 · 共 {{ answered }} 题 · 每题 {{ active.sequenceLength }} 项
         </p>
         <dl class="mt-7 grid grid-cols-3 gap-2 sm:gap-4">
           <div v-for="stat in [{ label: '正确', value: correctCount }, { label: '错误', value: wrongCount }, { label: '正确率', value: accuracy }]" :key="stat.label" class="rounded-xl border border-line py-5">
@@ -375,27 +391,37 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <PracticeSetupDialog v-if="phase === 'setup'" title="开始钢琴键位训练" description="选择训练方向、题目数量和序列长度" cancel-label="返回首页" @start="begin()" @cancel="leave">
+    <PracticeSetupDialog v-if="phase === 'setup'" title="开始钢琴键位训练" description="选择题型、题目数量和序列长度" cancel-label="返回首页" @start="begin()" @cancel="leave">
       <fieldset>
-        <legend class="mb-2 text-sm font-bold text-muted">
-          训练方向
+        <legend class="text-sm font-extrabold text-ink">
+          题型（可多选）
         </legend>
-        <div class="grid grid-cols-3 gap-2">
-          <label v-for="direction in directions" :key="direction.value" class="flex min-h-12 min-w-0 cursor-pointer items-center justify-center rounded-xl border-2 px-1 text-center text-[11px] font-bold whitespace-nowrap has-focus-visible:outline-2 has-focus-visible:outline-brand sm:text-sm" :class="settings.direction === direction.value ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
-            {{ direction.label }}
-            <input v-model="settings.direction" type="radio" name="direction" :value="direction.value" class="sr-only">
-          </label>
+        <div class="mt-2 grid grid-cols-2 gap-2">
+          <button v-for="option in questionTypeOptions" :key="option.value" type="button" role="checkbox" :aria-checked="isQuestionTypeSelected(option.value)" class="relative min-h-20 rounded-[20px] border-2 p-2 text-center transition sm:min-h-24 sm:p-3 sm:text-left" :class="isQuestionTypeSelected(option.value) ? 'border-brand bg-brand-soft' : 'border-line bg-white hover:border-brand/30'" @click="toggleQuestionType(option.value)">
+            <strong class="block pt-4 text-xs/4 font-black whitespace-nowrap text-ink sm:pt-0 sm:pr-5 sm:text-sm sm:whitespace-normal">{{ option.label }}</strong>
+            <span class="mt-2 hidden text-xs font-bold text-muted sm:block">{{ option.description }}</span>
+            <span v-if="isQuestionTypeSelected(option.value)" class="absolute top-2 right-2 grid size-4 place-items-center rounded-full bg-brand text-xs font-black text-white" aria-hidden="true">✓</span>
+          </button>
         </div>
+        <p class="mt-2 text-[11px] font-bold text-muted">
+          默认全选；训练时会在所选题型间均衡出题，至少保留一种。
+        </p>
       </fieldset>
       <fieldset>
-        <legend class="mb-2 text-sm font-bold text-muted">
-          训练长度
+        <legend class="text-sm font-extrabold text-ink">
+          题目数量
         </legend>
-        <div class="grid grid-cols-2 gap-3">
-          <label v-for="mode in (['fixed', 'infinite'] as const)" :key="mode" class="flex min-h-12 cursor-pointer items-center justify-between gap-2 rounded-2xl border-2 p-3 text-sm font-bold has-focus-visible:outline-2 has-focus-visible:outline-brand" :class="settings.mode === mode ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'">
-            {{ mode === 'fixed' ? '10 题' : '无限训练 ∞' }}
-            <input v-model="settings.mode" type="radio" name="mode" :value="mode" class="size-4 accent-brand">
-          </label>
+        <div class="mt-2 grid grid-cols-2 gap-2">
+          <button type="button" role="radio" class="relative min-h-20 rounded-[20px] border-2 p-3 text-left transition" :class="settings.mode === 'fixed' ? 'border-brand bg-brand-soft' : 'border-line bg-white hover:border-brand/30'" :aria-checked="settings.mode === 'fixed'" @click="settings.mode = 'fixed'">
+            <strong class="text-sm font-black text-ink">10 题练习</strong>
+            <span class="mt-2.5 block text-[11px] font-bold text-muted sm:text-xs">完成后查看正确率</span>
+            <span v-if="settings.mode === 'fixed'" class="absolute top-2 right-2 grid size-4 place-items-center rounded-full bg-brand text-xs font-black text-white" aria-hidden="true">✓</span>
+          </button>
+          <button type="button" role="radio" class="relative min-h-20 rounded-[20px] border-2 p-3 text-left transition" :class="settings.mode === 'infinite' ? 'border-brand bg-brand-soft' : 'border-line bg-white hover:border-brand/30'" :aria-checked="settings.mode === 'infinite'" @click="settings.mode = 'infinite'">
+            <strong class="text-sm font-black text-ink">无限练习</strong>
+            <span class="mt-2.5 block text-[11px] font-bold text-muted sm:text-xs">随时结束查看报告</span>
+            <span v-if="settings.mode === 'infinite'" class="absolute top-2 right-2 grid size-4 place-items-center rounded-full bg-brand text-xs font-black text-white" aria-hidden="true">✓</span>
+          </button>
         </div>
       </fieldset>
       <fieldset>

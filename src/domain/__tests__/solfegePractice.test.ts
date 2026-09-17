@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { allSolfegeNames, createDirectionOrder, createSolfegeOptionOrder } from '../solfegePractice.ts'
+import {
+  allSolfegeNames,
+  allSolfegeQuestionTypes,
+  createDirectionOrder,
+  createFixedQuestionQueue,
+  createQuestionTypeOrder,
+  createSolfegeOptionOrder,
+} from '../solfegePractice.ts'
 
 function seeded(seed: number) {
   return () => {
@@ -36,6 +43,37 @@ test('direction order terminates with constant random sources and rejects invali
   for (const count of [-1, 1.5, Number.NaN]) {
     assert.throws(() => createDirectionOrder(count), RangeError)
   }
+})
+
+test('selected question types are deduplicated, balanced, and cycled without adjacent repeats', () => {
+  for (let seed = 0; seed < 20; seed++) {
+    const order = createQuestionTypeOrder(10, allSolfegeQuestionTypes, seeded(seed))
+    const counts = allSolfegeQuestionTypes.map(type => order.filter(item => item === type).length)
+
+    assert.equal(order.length, 10)
+    assert.ok(Math.max(...counts) - Math.min(...counts) <= 1)
+    assert.ok(order.every((type, index) => index === 0 || type !== order[index - 1]))
+  }
+
+  assert.deepEqual(
+    createQuestionTypeOrder(4, ['dictation', 'dictation'], seeded(1)),
+    ['dictation', 'dictation', 'dictation', 'dictation'],
+  )
+  assert.notEqual(
+    createQuestionTypeOrder(3, allSolfegeQuestionTypes, () => 0, 'dictation')[0],
+    'dictation',
+  )
+  assert.throws(() => createQuestionTypeOrder(10, []), RangeError)
+})
+
+test('fixed queues preserve each selected question type and its answer direction', () => {
+  const queue = createFixedQuestionQueue(9, 2, allSolfegeQuestionTypes, seeded(42))
+
+  assert.deepEqual(new Set(queue.map(question => question.type)), new Set(allSolfegeQuestionTypes))
+  assert.ok(queue.every(question => question.sequence.length === 2))
+  assert.ok(queue.every(question => (
+    question.direction === (question.type === 'degree-to-name' ? 'degree-to-name' : 'name-to-degree')
+  )))
 })
 
 test('solfege choices stay complete and avoid scale order and the previous question even with constant randomness', () => {

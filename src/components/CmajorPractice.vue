@@ -7,20 +7,20 @@ import PianoKeyboard from '@/components/PianoKeyboard.vue'
 import PracticePageHeader from '@/components/PracticePageHeader.vue'
 import PracticeSetupDialog from '@/components/PracticeSetupDialog.vue'
 import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
-import { answerMapping, cMajorNotes, createMappingGenerator } from '@/domain/cMajorPractice'
+import { answerMapping, cMajorNotes, createMappingGenerator, mappingDirections } from '@/domain/cMajorPractice'
 import { createHighlightPlayer } from '@/domain/keyboardPractice'
 import { pianoKeys, pianoKeyShortcuts, pitchNames } from '@/domain/piano'
 import { pitchClassOf } from '@/domain/pitch'
 
 const emit = defineEmits<{ exit: [] }>()
 const sequencePresets = [1, 4, 8, 12] as const
-const directions: { value: MappingDirection, label: string, description: string }[] = [
-  { value: 'degree-to-key', label: '简谱 → 琴键', description: '看数字，点击对应琴键' },
-  { value: 'key-to-degree', label: '琴键 → 简谱', description: '看亮键，选择对应数字' },
+const questionTypeOptions: readonly { value: MappingDirection, label: string, description: string }[] = [
+  { value: 'degree-to-key', label: '简谱找琴键', description: '看数字，点击对应琴键' },
+  { value: 'key-to-degree', label: '琴键选简谱', description: '看亮键，选择对应数字' },
 ]
 const phase = ref<'setup' | 'playing' | 'result'>('setup')
-const settings = ref<MappingSettings>({ direction: 'degree-to-key', sequenceLength: 1, mode: 'fixed' })
-const active = ref<MappingSettings>({ ...settings.value })
+const settings = ref<MappingSettings>({ directions: [...mappingDirections], sequenceLength: 1, mode: 'fixed' })
+const active = ref<MappingSettings>({ ...settings.value, directions: [...settings.value.directions] })
 const setupReturn = ref<'playing' | 'result'>()
 const question = ref<MappingQuestion>()
 const answer = ref<MappingAnswer>({ index: 0, status: 'answering' })
@@ -46,8 +46,8 @@ const player = createHighlightPlayer((index) => {
 })
 const total = computed(() => correctCount.value + wrongCount.value)
 const accuracy = computed(() => total.value ? `${Math.round(correctCount.value / total.value * 100)}%` : '—')
-const forward = computed(() => active.value.direction === 'degree-to-key')
-const directionLabel = computed(() => directions.find(item => item.value === active.value.direction)!.label)
+const forward = computed(() => question.value?.direction !== 'key-to-degree')
+const directionLabel = computed(() => questionTypeOptions.find(item => item.value === question.value?.direction)?.label ?? '')
 const locked = computed(() => answer.value.status !== 'answering')
 const correct = computed(() => answer.value.status === 'correct')
 const isSequence = computed(() => active.value.sequenceLength > 1)
@@ -88,6 +88,21 @@ function focusHeading() {
     heading.value?.focus({ preventScroll: true })
   })
 }
+function isQuestionTypeSelected(direction: MappingDirection) {
+  return settings.value.directions.includes(direction)
+}
+function toggleQuestionType(direction: MappingDirection) {
+  if (isQuestionTypeSelected(direction)) {
+    if (settings.value.directions.length === 1) {
+      return
+    }
+    settings.value.directions = settings.value.directions.filter(item => item !== direction)
+    return
+  }
+  settings.value.directions = mappingDirections.filter(item => (
+    item === direction || settings.value.directions.includes(item)
+  ))
+}
 function finish() {
   stopPlayback()
   phase.value = 'result'
@@ -110,7 +125,7 @@ function advance() {
 function begin(previous = false) {
   stopPlayback()
   if (!previous) {
-    active.value = { ...settings.value }
+    active.value = { ...settings.value, directions: [...settings.value.directions] }
   }
   generate = createMappingGenerator(active.value)
   correctCount.value = 0
@@ -124,7 +139,7 @@ function begin(previous = false) {
 function openSetup() {
   stopPlayback()
   setupReturn.value = phase.value === 'result' ? 'result' : 'playing'
-  settings.value = { ...active.value }
+  settings.value = { ...active.value, directions: [...active.value.directions] }
   phase.value = 'setup'
 }
 function cancelSetup() {
@@ -320,7 +335,7 @@ onBeforeUnmount(() => {
           {{ total ? '让简谱数字和琴键位置逐渐形成稳定的联系。' : '准备好后，再开始一轮练习。' }}
         </p>
         <p class="mt-2 text-xs/6 text-muted">
-          {{ directionLabel }} · C 大调 · 每题 {{ active.sequenceLength }} 项 · 已答 {{ total }} 题
+          {{ active.directions.length }} 种题型 · C 大调 · 每题 {{ active.sequenceLength }} 项 · 已答 {{ total }} 题
         </p>
         <dl class="mt-7 grid grid-cols-3 gap-2 sm:gap-4">
           <div v-for="stat in [{ label: '正确', value: correctCount }, { label: '错误', value: wrongCount }, { label: '正确率', value: accuracy }]" :key="stat.label" class="rounded-2xl bg-canvas py-5">
@@ -379,23 +394,25 @@ onBeforeUnmount(() => {
       </div>
     </footer>
 
-    <PracticeSetupDialog v-if="phase === 'setup'" title="开始简谱琴键训练" description="选择适合这次练习的模式和序列长度" :cancel-label="setupReturn ? '返回' : '返回首页'" @start="begin()" @cancel="cancelSetup">
+    <PracticeSetupDialog v-if="phase === 'setup'" title="开始简谱琴键训练" description="选择题型、题目数量和序列长度" :cancel-label="setupReturn ? '返回' : '返回首页'" @start="begin()" @cancel="cancelSetup">
       <div class="flex flex-wrap items-center gap-3 text-xs">
         <span class="rounded-full bg-brand-soft px-3 py-1.5 font-extrabold text-brand-dark">C 大调 · 1=C</span>
         <span class="font-bold text-muted">固定调性 · 七个白键</span>
       </div>
       <fieldset>
         <legend class="text-sm font-extrabold text-ink">
-          练习方向
+          题型（可多选）
         </legend>
         <div class="mt-2 grid grid-cols-2 gap-2">
-          <label v-for="direction in directions" :key="direction.value" class="relative min-h-20 cursor-pointer rounded-[20px] border-2 p-3 text-left transition focus-within:ring-2 focus-within:ring-brand/30 focus-within:ring-offset-2" :class="settings.direction === direction.value ? 'border-brand bg-brand-soft' : 'border-line bg-white hover:border-brand/30'">
-            <input v-model="settings.direction" type="radio" name="mapping-direction" :value="direction.value" :aria-label="direction.label" class="sr-only">
-            <strong class="block pr-4 text-xs font-black text-ink sm:text-sm">{{ direction.label }}</strong>
-            <span class="mt-2.5 block text-[11px] font-bold text-muted sm:text-xs">{{ direction.description }}</span>
-            <span v-if="settings.direction === direction.value" class="absolute top-2 right-2 grid size-4 place-items-center rounded-full bg-brand text-xs font-black text-white" aria-hidden="true">✓</span>
-          </label>
+          <button v-for="option in questionTypeOptions" :key="option.value" type="button" role="checkbox" :aria-checked="isQuestionTypeSelected(option.value)" class="relative min-h-20 rounded-[20px] border-2 p-2 text-center transition sm:min-h-24 sm:p-3 sm:text-left" :class="isQuestionTypeSelected(option.value) ? 'border-brand bg-brand-soft' : 'border-line bg-white hover:border-brand/30'" @click="toggleQuestionType(option.value)">
+            <strong class="block pt-4 text-xs/4 font-black whitespace-nowrap text-ink sm:pt-0 sm:pr-5 sm:text-sm sm:whitespace-normal">{{ option.label }}</strong>
+            <span class="mt-2 hidden text-xs font-bold text-muted sm:block">{{ option.description }}</span>
+            <span v-if="isQuestionTypeSelected(option.value)" class="absolute top-2 right-2 grid size-4 place-items-center rounded-full bg-brand text-xs font-black text-white" aria-hidden="true">✓</span>
+          </button>
         </div>
+        <p class="mt-2 text-[11px] font-bold text-muted">
+          默认全选；训练时会在所选题型间均衡出题，至少保留一种。
+        </p>
       </fieldset>
 
       <fieldset>
