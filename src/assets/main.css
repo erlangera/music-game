@@ -49,6 +49,28 @@
   }
 }
 
+@layer components {
+  .seven-option-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 2px;
+    margin-inline: -0.5rem;
+  }
+
+  @media (min-width: 375px) {
+    .seven-option-grid {
+      gap: 0.25rem;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .seven-option-grid {
+      gap: 0.75rem;
+      margin-inline: 0;
+    }
+  }
+}
+
 #app {
   min-height: 100vh;
 }

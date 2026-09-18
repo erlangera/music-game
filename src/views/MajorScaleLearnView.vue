@@ -180,6 +180,10 @@ onMounted(() => void prepare())
             </p>
           </section>
         </div>
+        <RouterLink v-if="lessonIndex === 0" :to="{ name: 'tone-step-practice' }" class="mt-4 flex min-h-14 items-center justify-between gap-3 rounded-2xl border border-brand/20 bg-brand-soft px-4 py-3 text-brand-dark transition hover:border-brand/40 hover:bg-[#d8ecdf]">
+          <span><strong class="block text-sm font-extrabold">练一练半音与全音</strong><span class="mt-0.5 block text-xs font-bold text-brand/80">用音名或简谱，填写上行、下行的目标音</span></span>
+          <span class="shrink-0 text-xl" aria-hidden="true">→</span>
+        </RouterLink>
       </article>
       <p v-if="audioError" class="mt-3 text-xs text-muted" role="status">
         {{ audioError }}

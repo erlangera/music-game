@@ -2,7 +2,7 @@
 import type { PianoKeyMark } from '@/domain/piano'
 import type { MidiNote } from '@/domain/pitch'
 import type { RelativePitchAudioStep, RelativePitchMode, TonalHint, TonicQuestion } from '@/domain/relativePitch'
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
 import PracticeSetupDialog from '@/components/PracticeSetupDialog.vue'
@@ -36,6 +36,7 @@ const selectedMidi = ref<MidiNote>()
 const heading = ref<HTMLElement>()
 const nextButton = ref<HTMLButtonElement>()
 let nextQuestion = createTonicQuestionGenerator()
+let advanceTimer: number | undefined
 
 const {
   activeNotes,
@@ -87,6 +88,18 @@ function focusHeading() {
   void nextTick(() => heading.value?.focus())
 }
 
+function clearAdvanceTimer() {
+  if (advanceTimer !== undefined) {
+    window.clearTimeout(advanceTimer)
+    advanceTimer = undefined
+  }
+}
+
+function stopTransition() {
+  clearAdvanceTimer()
+  stop()
+}
+
 function playCurrentQuestion() {
   const current = question.value
   if (!current || locked.value) {
@@ -108,7 +121,7 @@ function playCurrentQuestion() {
 }
 
 function prepareQuestion() {
-  stop()
+  stopTransition()
   question.value = nextQuestion()
   selectedCandidate.value = undefined
   selectedMidi.value = undefined
@@ -118,7 +131,7 @@ function prepareQuestion() {
 }
 
 async function begin(repeat = false) {
-  stop()
+  stopTransition()
   if (!repeat) {
     activeMode.value = draftMode.value
     activeHint.value = draftHint.value
@@ -132,12 +145,25 @@ async function begin(repeat = false) {
 }
 
 function complete(correct: boolean, audioSteps?: readonly RelativePitchAudioStep[]) {
+  clearAdvanceTimer()
   answered.value++
   answerState.value = correct ? 'correct' : 'wrong'
   const current = question.value
   if (current) {
+    const finishFeedback = () => {
+      if (question.value?.id !== current.id || !locked.value) {
+        return
+      }
+      if (correct) {
+        advanceTimer = window.setTimeout(advance, 700)
+      }
+      else {
+        void nextTick(() => nextButton.value?.focus())
+      }
+    }
     void playTimeline(audioSteps ?? tonicResolutionSteps(current), {
-      onComplete: () => void nextTick(() => nextButton.value?.focus()),
+      onComplete: finishFeedback,
+      onUnavailable: finishFeedback,
     })
   }
 }
@@ -167,8 +193,9 @@ function advance() {
   if (!locked.value) {
     return
   }
+  clearAdvanceTimer()
   if (lastQuestion.value) {
-    stop()
+    stopTransition()
     phase.value = 'complete'
     focusHeading()
     return
@@ -177,7 +204,7 @@ function advance() {
 }
 
 function setup() {
-  stop()
+  stopTransition()
   draftMode.value = activeMode.value
   draftHint.value = activeHint.value
   phase.value = 'setup'
@@ -186,7 +213,7 @@ function setup() {
 }
 
 function leave() {
-  stop()
+  stopTransition()
   if (phase.value === 'playing' && activeMode.value === 'infinite' && answered.value > 0) {
     phase.value = 'complete'
     focusHeading()
@@ -196,6 +223,7 @@ function leave() {
 }
 
 onMounted(() => void prepare())
+onBeforeUnmount(clearAdvanceTimer)
 </script>
 
 <template>

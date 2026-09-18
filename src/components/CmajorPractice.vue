@@ -33,6 +33,7 @@ const content = ref<HTMLElement>()
 const nextButton = ref<HTMLButtonElement>()
 const { activeNotes, playNote, playSequence, prepare, unlock, stop, status: audioStatus, error: audioError } = useInstrumentPlayer('piano')
 let generate = createMappingGenerator(active.value)
+let advanceTimer: number | undefined
 const heldKeys = new Set<string>()
 const player = createHighlightPlayer((index) => {
   displayIndex.value = index
@@ -78,6 +79,10 @@ const marks = computed<PianoKeyMark[]>(() => {
 })
 
 function stopPlayback() {
+  if (advanceTimer !== undefined) {
+    window.clearTimeout(advanceTimer)
+    advanceTimer = undefined
+  }
   player.stop()
   stop()
   heldKeys.clear()
@@ -190,7 +195,12 @@ function choose(midi: MidiNote) {
       wrongCount.value++
     }
     void playNote(forward.value ? midi : currentNote.value!.midi)
-    void nextTick(() => nextButton.value?.focus({ preventScroll: true }))
+    if (correct.value) {
+      advanceTimer = window.setTimeout(advance, isSequence.value ? 1200 : 1000)
+    }
+    else {
+      void nextTick(() => nextButton.value?.focus({ preventScroll: true }))
+    }
   }
   else if (forward.value) {
     void playNote(midi)
@@ -309,8 +319,8 @@ onBeforeUnmount(() => {
           <p class="mb-3 hidden text-xs text-muted sm:block">
             选择简谱数字
           </p>
-          <div class="grid grid-cols-4 gap-2 sm:grid-cols-7 sm:gap-3" role="group" aria-label="选择简谱数字">
-            <button v-for="note in cMajorNotes" :key="note.degree" type="button" class="min-h-14 rounded-2xl border-2 text-2xl font-extrabold transition-colors sm:min-h-18 sm:text-3xl" :class="locked && note.degree === currentNote?.degree ? 'border-brand bg-brand-soft text-brand-dark' : locked && !correct && note.degree === selectedDegree ? 'border-error bg-error-soft text-error' : 'border-line hover:border-brand hover:bg-brand-soft'" :disabled="locked" :aria-label="`选择简谱 ${note.degree}`" @click="choose(note.midi)">
+          <div class="seven-option-grid" role="group" aria-label="选择简谱数字">
+            <button v-for="note in cMajorNotes" :key="note.degree" type="button" class="min-h-12 rounded-xl border-2 text-lg font-extrabold transition-colors sm:min-h-18 sm:rounded-2xl sm:text-3xl" :class="locked && note.degree === currentNote?.degree ? 'border-brand bg-brand-soft text-brand-dark' : locked && !correct && note.degree === selectedDegree ? 'border-error bg-error-soft text-error' : 'border-line hover:border-brand hover:bg-brand-soft'" :disabled="locked" :aria-label="`选择简谱 ${note.degree}`" @click="choose(note.midi)">
               <span v-if="locked && (note.degree === currentNote?.degree || (!correct && note.degree === selectedDegree))" class="text-sm" aria-hidden="true">{{ note.degree === currentNote?.degree ? '✓' : '×' }}</span> {{ note.degree }}
             </button>
           </div>

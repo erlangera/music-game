@@ -471,7 +471,7 @@ onBeforeUnmount(() => {
 
     <main class="mx-auto flex min-h-[calc(100vh-80px)] max-w-[940px] flex-col px-4 py-6 sm:px-6 sm:py-10 lg:px-8 lg:py-12" :inert="phase === 'setup'" :aria-hidden="phase === 'setup'">
       <section v-if="phase === 'setup'" class="flex flex-1 flex-col opacity-70" aria-hidden="true">
-        <div class="rounded-[26px] border border-line bg-white px-5 py-7 text-center shadow-card sm:rounded-[30px] sm:px-9 sm:py-10 lg:p-12">
+        <div class="rounded-[26px] border border-line bg-white px-3 py-7 text-center shadow-card sm:rounded-[30px] sm:px-9 sm:py-10 lg:p-12">
           <p class="text-xs font-extrabold tracking-wide text-muted sm:text-sm">
             看到唱名，选择对应的简谱数字
           </p>
@@ -483,8 +483,8 @@ onBeforeUnmount(() => {
               它对应哪个数字？
             </p>
           </div>
-          <div class="grid grid-cols-4 gap-2.5 sm:gap-3 lg:grid-cols-7">
-            <div v-for="answer in allDegrees" :key="answer" class="grid min-h-[68px] place-items-center rounded-2xl border-2 border-line bg-white text-2xl font-black text-ink sm:min-h-[76px] sm:text-3xl">
+          <div class="seven-option-grid">
+            <div v-for="answer in allDegrees" :key="answer" class="grid min-h-12 place-items-center rounded-xl border-2 border-line bg-white text-base font-black text-ink sm:min-h-[76px] sm:rounded-2xl sm:text-3xl">
               {{ answer }}
             </div>
           </div>
@@ -492,7 +492,7 @@ onBeforeUnmount(() => {
       </section>
 
       <section v-else-if="phase === 'playing' && currentQuestion" class="flex flex-1 flex-col" aria-labelledby="question-title">
-        <div class="rounded-[26px] border border-line bg-white px-5 py-7 text-center shadow-card sm:rounded-[30px] sm:px-9 sm:py-10 lg:p-12">
+        <div class="rounded-[26px] border border-line bg-white px-3 py-7 text-center shadow-card sm:rounded-[30px] sm:px-9 sm:py-10 lg:p-12">
           <div class="flex flex-wrap items-center justify-center gap-2">
             <p id="question-title" class="text-xs font-extrabold tracking-wide text-muted sm:text-sm">
               {{ isDictationQuestion ? '听唱名，依次选择对应的简谱数字' : currentQuestion.direction === 'name-to-degree' ? '看到唱名，依次选择对应的简谱数字' : '看到简谱数字，依次选择对应的唱名' }}
@@ -520,12 +520,12 @@ onBeforeUnmount(() => {
           <p v-if="isDictationQuestion || audioError" class="mb-4 text-xs font-bold text-muted" role="status">
             {{ audioError || (autoPlaying ? '正在依次播放 · 每项结束后间隔 1 秒 · 点击可中断' : '点击任意小喇叭，重听对应唱名') }}
           </p>
-          <div class="grid grid-cols-4 gap-2.5 sm:gap-3 lg:grid-cols-7" aria-label="答案选项">
-            <button v-for="answer in optionOrder" :key="`${currentQuestion.direction}-${answer}`" type="button" class="relative min-h-[68px] rounded-2xl border-2 text-2xl font-black transition sm:min-h-[76px] sm:text-3xl" :class="answerButtonClass(answer)" :disabled="answerState !== 'answering'" :aria-label="currentQuestion.direction === 'name-to-degree' ? `选择简谱数字 ${answer}` : `选择唱名 ${answer}`" @click="chooseAnswer(answer)">
+          <div class="seven-option-grid" aria-label="答案选项">
+            <button v-for="answer in optionOrder" :key="`${currentQuestion.direction}-${answer}`" type="button" class="relative min-h-12 rounded-xl border-2 text-base font-black transition sm:min-h-[76px] sm:rounded-2xl sm:text-3xl" :class="answerButtonClass(answer)" :disabled="answerState !== 'answering'" :aria-label="currentQuestion.direction === 'name-to-degree' ? `选择简谱数字 ${answer}` : `选择唱名 ${answer}`" @click="chooseAnswer(answer)">
               {{ answer }}
-              <SpeakerIcon v-if="typeof answer === 'string'" class="absolute right-2 bottom-2 size-4" :playing="playingKey === `answer-${answer}`" />
-              <svg v-if="answerState !== 'answering' && answer === expectedAnswer" viewBox="0 0 20 20" class="absolute top-2 right-2 size-4" aria-hidden="true"><path d="m5 10.5 3.1 3L15 6.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
-              <svg v-if="answerState === 'incorrect' && selectedAnswer === answer" viewBox="0 0 20 20" class="absolute top-2 right-2 size-4" aria-hidden="true"><path d="m6.5 6.5 7 7m0-7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
+              <SpeakerIcon v-if="typeof answer === 'string'" class="absolute right-0.5 bottom-0.5 size-3 sm:right-2 sm:bottom-2 sm:size-4" :playing="playingKey === `answer-${answer}`" />
+              <svg v-if="answerState !== 'answering' && answer === expectedAnswer" viewBox="0 0 20 20" class="absolute top-0.5 right-0.5 size-3 sm:top-2 sm:right-2 sm:size-4" aria-hidden="true"><path d="m5 10.5 3.1 3L15 6.8" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              <svg v-if="answerState === 'incorrect' && selectedAnswer === answer" viewBox="0 0 20 20" class="absolute top-0.5 right-0.5 size-3 sm:top-2 sm:right-2 sm:size-4" aria-hidden="true"><path d="m6.5 6.5 7 7m0-7-7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
             </button>
           </div>
 

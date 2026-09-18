@@ -2,7 +2,7 @@
 import type { Accidental, MajorScaleExercise, MajorScaleQuestion, MajorScaleSettings } from '@/domain/majorScale'
 import type { PianoKeyMark } from '@/domain/piano'
 import type { MidiNote } from '@/domain/pitch'
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import PianoKeyboard from '@/components/PianoKeyboard.vue'
 import PracticeSetupDialog from '@/components/PracticeSetupDialog.vue'
 import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
@@ -53,6 +53,7 @@ const heading = ref<HTMLElement>()
 const nextButton = ref<HTMLButtonElement>()
 const { activeNotes, error: audioError, playNote, playSequence, prepare, status: audioStatus, stop } = useInstrumentPlayer('piano')
 let generate = createMajorScaleGenerator(active.value)
+let advanceTimer: number | undefined
 
 const answered = computed(() => correctCount.value + wrongCount.value)
 const accuracy = computed(() => answered.value ? `${Math.round(correctCount.value / answered.value * 100)}%` : '—')
@@ -136,6 +137,10 @@ function clearPlayback() {
 }
 
 function clearTransition() {
+  if (advanceTimer !== undefined) {
+    window.clearTimeout(advanceTimer)
+    advanceTimer = undefined
+  }
   clearPlayback()
 }
 
@@ -219,11 +224,13 @@ function complete(correct: boolean) {
   answerState.value = correct ? 'correct' : 'wrong'
   if (correct) {
     correctCount.value++
+    const delay = question.value?.type === 'accidentals' || question.value?.type === 'repair' ? 1500 : question.value?.type === 'piano' ? 1100 : 1000
+    advanceTimer = window.setTimeout(advance, delay)
   }
   else {
     wrongCount.value++
+    void nextTick(() => nextButton.value?.focus())
   }
-  void nextTick(() => nextButton.value?.focus())
 }
 
 function toggleAccidental(index: number) {
@@ -280,10 +287,15 @@ function playCorrectScale() {
   if (!current) {
     return
   }
+  if (advanceTimer !== undefined) {
+    window.clearTimeout(advanceTimer)
+    advanceTimer = undefined
+  }
   playSequence(scaleMidiNotes(current.scale), { intervalMilliseconds: 450 })
 }
 
 onMounted(() => void prepare())
+onBeforeUnmount(clearTransition)
 </script>
 
 <template>
@@ -373,8 +385,8 @@ onMounted(() => void prepare())
         </div>
 
         <div v-if="question.type === 'accidentals'" class="mx-auto mt-7 max-w-3xl">
-          <div class="grid grid-cols-4 gap-2 sm:grid-cols-7">
-            <button v-for="(note, index) in question.scale.notes" :key="index" type="button" class="min-h-20 rounded-xl border-2 text-xl font-black" :class="selectedIndices.includes(index) ? 'border-brand bg-brand-soft text-brand-dark' : locked && question.expectedIndices.includes(index) ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'" :disabled="locked" :aria-pressed="selectedIndices.includes(index)" @click="toggleAccidental(index)">
+          <div class="seven-option-grid">
+            <button v-for="(note, index) in question.scale.notes" :key="index" type="button" class="min-h-12 rounded-lg border-2 text-base font-black sm:min-h-20 sm:rounded-xl sm:text-xl" :class="selectedIndices.includes(index) ? 'border-brand bg-brand-soft text-brand-dark' : locked && question.expectedIndices.includes(index) ? 'border-brand bg-brand-soft text-brand-dark' : 'border-line'" :disabled="locked" :aria-pressed="selectedIndices.includes(index)" @click="toggleAccidental(index)">
               {{ naturalLetter(note) }}<span v-if="selectedIndices.includes(index) || locked && question.expectedIndices.includes(index)" class="text-brand">{{ accidentalOf(note) || '•' }}</span><span class="mt-1 block text-[10px] text-muted">{{ index + 1 }}</span>
             </button>
           </div>
@@ -384,8 +396,8 @@ onMounted(() => void prepare())
         </div>
 
         <div v-else-if="question.type === 'repair'" class="mx-auto mt-7 max-w-3xl">
-          <div class="grid grid-cols-4 gap-2 sm:grid-cols-7">
-            <button v-for="(note, index) in question.displayedNotes" :key="index" type="button" class="min-h-20 rounded-xl border-2 text-xl font-black" :class="selectedRepairIndex === index ? 'border-brand bg-brand-soft text-brand-dark' : locked && index === question.wrongIndex ? 'border-error bg-error-soft text-error' : 'border-line'" :disabled="locked" :aria-pressed="selectedRepairIndex === index" @click="selectedRepairIndex = index; selectedAccidental = undefined">
+          <div class="seven-option-grid">
+            <button v-for="(note, index) in question.displayedNotes" :key="index" type="button" class="min-h-12 rounded-lg border-2 text-sm font-black sm:min-h-20 sm:rounded-xl sm:text-xl" :class="selectedRepairIndex === index ? 'border-brand bg-brand-soft text-brand-dark' : locked && index === question.wrongIndex ? 'border-error bg-error-soft text-error' : 'border-line'" :disabled="locked" :aria-pressed="selectedRepairIndex === index" @click="selectedRepairIndex = index; selectedAccidental = undefined">
               {{ note }}<span class="mt-1 block text-[10px] text-muted">{{ index + 1 }}</span>
             </button>
           </div>
@@ -403,8 +415,8 @@ onMounted(() => void prepare())
           <div class="mx-auto grid size-24 place-items-center rounded-3xl bg-brand-soft text-4xl font-black text-brand-dark">
             {{ question.direction === 'degree-to-note' ? question.degree : question.scale.notes[question.degree - 1] }}
           </div>
-          <div class="mt-7 grid grid-cols-4 gap-2 sm:grid-cols-7">
-            <button v-for="option in question.options" :key="option" type="button" class="min-h-14 rounded-xl border-2 text-lg font-black" :class="locked && option === expectedMapping ? 'border-brand bg-brand-soft text-brand-dark' : locked && option === selectedMapping && !wasCorrect ? 'border-error bg-error-soft text-error' : 'border-line hover:border-brand hover:bg-brand-soft'" :disabled="locked" @click="answerMapping(option)">
+          <div class="seven-option-grid mt-7">
+            <button v-for="option in question.options" :key="option" type="button" class="min-h-12 rounded-lg border-2 text-sm font-black sm:min-h-14 sm:rounded-xl sm:text-lg" :class="locked && option === expectedMapping ? 'border-brand bg-brand-soft text-brand-dark' : locked && option === selectedMapping && !wasCorrect ? 'border-error bg-error-soft text-error' : 'border-line hover:border-brand hover:bg-brand-soft'" :disabled="locked" @click="answerMapping(option)">
               {{ option }}
             </button>
           </div>

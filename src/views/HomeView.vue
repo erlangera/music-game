@@ -334,11 +334,22 @@ function handleStageAction(stage: Stage) {
                     </div>
                   </div>
 
-                  <div v-if="stage.step === '04' || stage.step === '05'" class="mt-4 grid grid-cols-2 gap-2">
-                    <RouterLink :to="{ name: stage.step === '04' ? 'scale-learn' : 'relative-pitch-learn' }" class="grid min-h-11 place-items-center rounded-xl border border-line text-xs font-extrabold transition-colors hover:border-brand/30 hover:bg-brand-soft hover:text-brand-dark">
+                  <div v-if="stage.step === '04'" class="mt-4 grid grid-cols-3 gap-2">
+                    <RouterLink :to="{ name: 'scale-learn' }" class="grid min-h-11 place-items-center rounded-xl border border-line text-xs font-extrabold transition-colors hover:border-brand/30 hover:bg-brand-soft hover:text-brand-dark">
+                      学习课程
+                    </RouterLink>
+                    <RouterLink :to="{ name: 'tone-step-practice' }" class="grid min-h-11 place-items-center rounded-xl border border-brand/30 bg-brand-soft px-1 text-center text-xs font-extrabold text-brand-dark transition-colors hover:bg-[#d8ecdf]">
+                      半音/全音
+                    </RouterLink>
+                    <RouterLink :to="{ name: 'scale-practice' }" class="grid min-h-11 place-items-center rounded-xl bg-brand px-1 text-center text-xs font-extrabold text-white transition-colors hover:bg-brand-dark">
+                      大调练习
+                    </RouterLink>
+                  </div>
+                  <div v-else-if="stage.step === '05'" class="mt-4 grid grid-cols-2 gap-2">
+                    <RouterLink :to="{ name: 'relative-pitch-learn' }" class="grid min-h-11 place-items-center rounded-xl border border-line text-xs font-extrabold transition-colors hover:border-brand/30 hover:bg-brand-soft hover:text-brand-dark">
                       开始学习
                     </RouterLink>
-                    <RouterLink :to="{ name: stage.step === '04' ? 'scale-practice' : 'relative-pitch-practice', query: stage.step === '05' ? { mode: 'fixed' } : {} }" class="grid min-h-11 place-items-center rounded-xl bg-brand text-xs font-extrabold text-white transition-colors hover:bg-brand-dark">
+                    <RouterLink :to="{ name: 'relative-pitch-practice', query: { mode: 'fixed' } }" class="grid min-h-11 place-items-center rounded-xl bg-brand text-xs font-extrabold text-white transition-colors hover:bg-brand-dark">
                       开始练习
                     </RouterLink>
                   </div>

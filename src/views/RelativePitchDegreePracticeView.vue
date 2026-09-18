@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { CoreScaleDegree, DegreeQuestion, RelativePitchMode, TonalHint } from '@/domain/relativePitch'
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import PracticeSetupDialog from '@/components/PracticeSetupDialog.vue'
 import { useInstrumentPlayer } from '@/composables/useInstrumentPlayer'
@@ -36,6 +36,7 @@ const selectedDegree = ref<CoreScaleDegree>()
 const heading = ref<HTMLElement>()
 const nextButton = ref<HTMLButtonElement>()
 let nextQuestion = createDegreeQuestionGenerator()
+let advanceTimer: number | undefined
 
 const {
   error: audioError,
@@ -71,6 +72,18 @@ function focusHeading() {
   void nextTick(() => heading.value?.focus())
 }
 
+function clearAdvanceTimer() {
+  if (advanceTimer !== undefined) {
+    window.clearTimeout(advanceTimer)
+    advanceTimer = undefined
+  }
+}
+
+function stopTransition() {
+  clearAdvanceTimer()
+  stop()
+}
+
 function playCurrentQuestion() {
   const current = question.value
   if (!current || locked.value) {
@@ -92,7 +105,7 @@ function playCurrentQuestion() {
 }
 
 function prepareQuestion() {
-  stop()
+  stopTransition()
   question.value = nextQuestion()
   selectedDegree.value = undefined
   answerState.value = 'listening'
@@ -101,7 +114,7 @@ function prepareQuestion() {
 }
 
 async function begin(repeat = false) {
-  stop()
+  stopTransition()
   if (!repeat) {
     activeMode.value = draftMode.value
     activeHint.value = draftHint.value
@@ -121,9 +134,22 @@ function chooseDegree(degree: CoreScaleDegree) {
   }
   selectedDegree.value = degree
   answered.value++
-  answerState.value = isDegreeAnswer(current, degree) ? 'correct' : 'wrong'
+  const correct = isDegreeAnswer(current, degree)
+  answerState.value = correct ? 'correct' : 'wrong'
+  const finishFeedback = () => {
+    if (question.value?.id !== current.id || !locked.value) {
+      return
+    }
+    if (correct) {
+      advanceTimer = window.setTimeout(advance, 700)
+    }
+    else {
+      void nextTick(() => nextButton.value?.focus())
+    }
+  }
   void playTimeline(degreeResolutionSteps(current), {
-    onComplete: () => void nextTick(() => nextButton.value?.focus()),
+    onComplete: finishFeedback,
+    onUnavailable: finishFeedback,
   })
 }
 
@@ -131,8 +157,9 @@ function advance() {
   if (!locked.value) {
     return
   }
+  clearAdvanceTimer()
   if (lastQuestion.value) {
-    stop()
+    stopTransition()
     phase.value = 'complete'
     focusHeading()
     return
@@ -141,7 +168,7 @@ function advance() {
 }
 
 function setup() {
-  stop()
+  stopTransition()
   draftMode.value = activeMode.value
   draftHint.value = activeHint.value
   phase.value = 'setup'
@@ -150,7 +177,7 @@ function setup() {
 }
 
 function leave() {
-  stop()
+  stopTransition()
   if (phase.value === 'playing' && activeMode.value === 'infinite' && answered.value > 0) {
     phase.value = 'complete'
     focusHeading()
@@ -160,6 +187,7 @@ function leave() {
 }
 
 onMounted(() => void prepare())
+onBeforeUnmount(clearAdvanceTimer)
 </script>
 
 <template>

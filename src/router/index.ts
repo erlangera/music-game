@@ -40,6 +40,12 @@ const router = createRouter({
       meta: { title: '自然大调练习 · 音阶阶' },
     },
     {
+      path: '/scales/steps',
+      name: 'tone-step-practice',
+      component: () => import('@/views/ToneStepPracticeView.vue'),
+      meta: { title: '半音与全音训练 · 音阶阶' },
+    },
+    {
       path: '/ear',
       name: 'relative-pitch-home',
       component: () => import('@/views/RelativePitchHomeView.vue'),
