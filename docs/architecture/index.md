@@ -58,6 +58,10 @@ index.html
                       -> /src/composables/useInstrumentPlayer.ts
 ```
 
+## Rhythm Slice
+
+`RhythmLearnView.vue` 与 `RhythmPracticeView.vue` 复用共享头部与设置弹窗；纯规则在 `domain/rhythm.ts`。独立 `useRhythmAudio.ts` 用 AudioContext 预约节拍和题目，避免通用钢琴播放器的 UI 定时器抖动；无需采样或新增依赖。起音听写没有实时输入判分，完整范围见 [产品文档](../product/rhythm-training.md)。
+
 ## Source Responsibilities
 
 钢琴训练、自然大调和自由钢琴都使用 `PianoKeyboard.vue`；组件根据 MIDI 起止音生成一或多个八度，通过 mark 输入统一 `member/active/correct/wrong` 状态，只发出 MIDI note 事件。琴键几何、音名、快捷键和状态优先级位于不含 Vue 的 `piano.ts`。`main.ts` 把钢琴注册到应用级乐器注册表，`useInstrumentPlayer.ts` 按 id 注入乐器并绑定卸载清理；`audio/instrumentPlayer.ts` 提供可注入假音源测试的响应式控制器，管理预加载、解锁、单音、持续按键、活动高亮和可取消序列。`instrumentAudio.ts` 是平台无关的声音契约，`tonePianoAudio.ts` 只管理钢琴采样、音量、释放和合成降级。训练模块仍各自持有题目、判分和会话状态，没有抽象通用计分引擎。
@@ -93,7 +97,7 @@ index.html
 
 唱名设置页是所有练习设置入口的项目参考标准，新增模块也须遵循；完整约定见 [Practice Setup Standard](frontend.md#practice-setup-standard)。
 
-六个训练入口（唱名、钢琴、C 大调简谱与琴键、自然大调、主音感、核心音级听辨）使用 `PracticeSetupDialog.vue`。共享层只负责原生模态 dialog、标题与说明、固定头部/底部、内部滚动、初始焦点、Escape 取消和背景滚动锁定；通过默认 slot 接收设置项，通过 start/cancel 事件交回会话组件。设置值、音频准备、开始/返回路径和训练状态仍由各模块管理。
+训练入口（唱名、钢琴、C 大调简谱与琴键、自然大调、半音/全音、主音感、核心音级听辨、节奏听写）使用 `PracticeSetupDialog.vue`。共享层只负责原生模态 dialog、标题与说明、固定头部/底部、内部滚动、初始焦点、Escape 取消和背景滚动锁定；通过默认 slot 接收设置项，通过 start/cancel 事件交回会话组件。设置值、音频准备、开始/返回路径和训练状态仍由各模块管理。
 
 ## Build and Delivery
 
@@ -109,7 +113,7 @@ index.html
 - 新增真实页面时在路由表中声明并放入 `src/views/`；非测试工具使用 `/tools/<id>` 和 `src/views/tools/`，不要为尚未实现的导航项建立空页面。
 - 当学习进度需要跨页面共享时，再建立明确的状态与持久化边界。
 - 把乐理规则、题目生成与评分建模为不依赖 Vue 的领域模块，方便确定性测试。
-- 当前通用控制器已提供基于浏览器时钟的可取消播放序列；需要节奏精度的听辨或演奏模块再将调度下沉到 Tone AudioContext，不提前增加空的节拍系统。
+- 当前通用控制器已提供基于浏览器时钟的可取消播放序列；节奏模块已使用独立 AudioContext 预约播放，未来真实演奏判分仍需延迟校准与输入时钟设计。
 - Web MIDI 只负责把输入规范化为现有 `MidiNote` 和 0–1 velocity，不让设备 API 或 Tone 类型渗入题目和判分。
 
 任何引入新边界的实现都应先记录理由，并更新本页和 `ARCHITECTURE.md`。

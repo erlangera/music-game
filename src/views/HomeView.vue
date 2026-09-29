@@ -82,6 +82,15 @@ const stages: Stage[] = [
     tone: 'blue',
     status: 'ready',
   },
+  {
+    step: '06',
+    title: '节奏入门',
+    description: '稳住四拍，听懂二八与半拍休止',
+    progress: 0,
+    lessons: '图解试听 + 节奏听写',
+    tone: 'green',
+    status: 'ready',
+  },
 ]
 
 const toneClasses = {
@@ -120,6 +129,11 @@ function startSolfegePractice() {
 }
 
 function handleStageAction(stage: Stage) {
+  if (stage.step === '06') {
+    void router.push({ name: 'rhythm-learn' })
+    return
+  }
+
   if (stage.step === '03') {
     void router.push({ name: 'c-major' })
     return

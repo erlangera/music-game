@@ -5,7 +5,7 @@
 ## Project Snapshot
 
 - 产品：面向中文简谱初学者的音高与乐理训练 Web 应用，工作名“音阶阶”。
-- 当前阶段：首页/学习路径原型、唱名文字/默写、十二音键位、C 大调简谱与琴键、十二个自然大调学习/练习、主音感与核心音级听辨、自由钢琴；成绩仅在当次会话中保留，完整记录、复盘和解锁闭环仍为规划。
+- 当前阶段：首页/学习路径原型、唱名文字/默写、十二音键位、C 大调简谱与琴键、十二个自然大调学习/练习、主音感与核心音级听辨、4/4 节奏入门与起音听写、自由钢琴；成绩仅在当次会话中保留，完整记录、复盘和解锁闭环仍为规划。
 - 技术栈：Vue 3、Vue Router、TypeScript、Vite、Tailwind CSS 4、Tone.js。
 - 包管理：npm，锁文件为 `package-lock.json`。
 - 部署：GitHub Actions 构建并发布到 GitHub Pages，站点 base path 为 `/music-game/`。
@@ -38,6 +38,7 @@ npm run preview
 - `src/views/tools/`、`src/tools/catalog.ts`：不计分的音乐工具页和可扩展工具目录；当前包含自由钢琴。
 - `src/views/MajorScale*View.vue`、`src/domain/majorScale.ts`：十三课自然大调学习和四类练习。
 - `src/views/RelativePitch*View.vue`、`src/domain/relativePitch.ts`：相对音高入口、学习、主音感及核心音级听辨。
+- `src/views/Rhythm*View.vue`、`src/domain/rhythm.ts`、`src/composables/useRhythmAudio.ts`：节奏图解试听、起音位置听写和 AudioContext 预约播放。
 - `src/audio/`、`src/composables/useInstrumentPlayer.ts`：通用乐器声音契约、Tone.js 钢琴采样/合成降级实现和 Vue 状态包装。
 - `src/assets/main.css`：Tailwind 入口、设计 token 和全局基础样式。
 - `public/`：不经打包处理的唱名与自托管 Salamander 钢琴采样等静态资源。

@@ -4,6 +4,18 @@ const router = createRouter({
   history: createWebHashHistory(import.meta.env.BASE_URL),
   routes: [
     {
+      path: '/rhythm',
+      name: 'rhythm-learn',
+      component: () => import('@/views/RhythmLearnView.vue'),
+      meta: { title: '节奏入门 · 音阶阶' },
+    },
+    {
+      path: '/rhythm/practice',
+      name: 'rhythm-practice',
+      component: () => import('@/views/RhythmPracticeView.vue'),
+      meta: { title: '节奏听写 · 音阶阶' },
+    },
+    {
       path: '/',
       name: 'home',
       component: () => import('@/views/HomeView.vue'),
